@@ -1,0 +1,17 @@
+# Ignore Python bytecode cache directories
+__pycache__/
+# Ignore all contents inside upload_image folder
+upload_image/
+
+# Ignore .env file
+.env
+
+# Ignore Python virtual environment
+venv/
+
+# Ignore Python bytecode files
+*.pyc
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
