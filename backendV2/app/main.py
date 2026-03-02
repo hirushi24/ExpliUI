@@ -14,7 +14,8 @@ if not os.path.exists(UPLOAD_DIR):
 # 1. Define the origins that are allowed to make requests to API
 origins = [
     "http://localhost:3000",    # Common React port
-    "http://localhost:5173",    # Common Vite/Vue port
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",   # Common Vite/Vue port
     "http://127.0.0.1:3000",
     # Add production domain here later
 ]

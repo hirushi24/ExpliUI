@@ -30,7 +30,7 @@
 //   onMetaChange,
 //   onComparisonModeChange,
 //   onConfirm,
-//   onEdit,
+//   onEdit, 
 // }: Props) {
 //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, side: "A" | "B") => {
 //     if (e.target.files && e.target.files[0]) onUpload(side, e.target.files[0]);
@@ -1231,7 +1231,7 @@ export function PairUploadPanel({
   useEffect(() => {
     if (!pair.comparisonMode) return;
 
-    if (pair.comparisonMode === "desktop-desktop") {
+    if (pair.comparisonMode === "desktop-desktop") { 
       if (pair.metaA.deviceType !== "desktop") onMetaChange("A", "deviceType", "desktop");
       if (pair.metaB.deviceType !== "desktop") onMetaChange("B", "deviceType", "desktop");
     }
