@@ -403,50 +403,89 @@ export default function UploadTest() {
 
     setIsUploading(true);
     try {
-      const payload: UploadPairsPayload = {
-        type:1,
-        user_id: Number(localStorage.getItem("Id")),
-        pair_list: [],
+      // const payload: UploadPairsPayload = {
+      //   type:1,
+      //   user_id: Number(localStorage.getItem("Id")),
+      //   pair_list: [],
+      // };
+      const userId = Number(localStorage.getItem("Id"));
+
+      const results = await Promise.all(
+        readyPairs.map(async (pair) => {
+          if (!pair.fileA || !pair.fileB) return null;
+
+          const base64A = await fileToBase64(pair.fileA);
+          const base64B = await fileToBase64(pair.fileB);
+
+          const payload = {
+            user_id: userId,
+            pair_id: pair.id,
+            image_list: [
+              {
+                image_name: pair.fileA.name,
+                image_base64: base64A,
+              },
+              {
+                image_name: pair.fileB.name,
+                image_base64: base64B,
+              },
+            ],
+          };
+
+
+      // let imageIdCounter = 1;
+      // for (const pair of readyPairs) {
+      //   if (!pair.fileA || !pair.fileB) continue;
+
+      //   const base64A = await fileToBase64(pair.fileA);
+      //   const base64B = await fileToBase64(pair.fileB);
+
+      //   const imageA: ImagePayload = {
+      //     image_id: imageIdCounter++,
+      //     image_name: pair.fileA.name,
+      //     image_base64: base64A,
+      //     device_type: pair.metaA.deviceType,
+      //     browser: pair.metaA.browser.toLowerCase(),
+      //     os: pair.metaA.os.toLowerCase(),
+      //   };
+
+      //   const imageB: ImagePayload = {
+      //     image_id: imageIdCounter++,
+      //     image_name: pair.fileB.name,
+      //     image_base64: base64B,
+      //     device_type: pair.metaB.deviceType,
+      //     browser: pair.metaB.browser.toLowerCase(),
+      //     os: pair.metaB.os.toLowerCase(),
+      //   };
+
+      //   const pairPayload: PairPayload = {
+      //     pair_id: pair.id,
+      //     image_list: [imageA, imageB],
+      //   };
+
+      //   payload.pair_list.push(pairPayload);
+      // }
+
+      // console.log("Sending payload:", payload);
+
+      // const response = await uploadApi.post("/predict/GetPredictResult", payload, {
+      //   headers: { "Content-Type": "application/json" },
+      // });
+      const response = await uploadApi.post("/predict/CompareRuleBased", payload, {
+            headers: { "Content-Type": "application/json" },
+          });
+
+          return response.data?.results;
+        })
+      );
+
+      const response = {
+        data: {
+          status: "success",
+          results: results.filter(Boolean),
+        },
       };
-
-      let imageIdCounter = 1;
-      for (const pair of readyPairs) {
-        if (!pair.fileA || !pair.fileB) continue;
-
-        const base64A = await fileToBase64(pair.fileA);
-        const base64B = await fileToBase64(pair.fileB);
-
-        const imageA: ImagePayload = {
-          image_id: imageIdCounter++,
-          image_name: pair.fileA.name,
-          image_base64: base64A,
-          device_type: pair.metaA.deviceType,
-          browser: pair.metaA.browser.toLowerCase(),
-          os: pair.metaA.os.toLowerCase(),
-        };
-
-        const imageB: ImagePayload = {
-          image_id: imageIdCounter++,
-          image_name: pair.fileB.name,
-          image_base64: base64B,
-          device_type: pair.metaB.deviceType,
-          browser: pair.metaB.browser.toLowerCase(),
-          os: pair.metaB.os.toLowerCase(),
-        };
-
-        const pairPayload: PairPayload = {
-          pair_id: pair.id,
-          image_list: [imageA, imageB],
-        };
-
-        payload.pair_list.push(pairPayload);
-      }
-
-      console.log("Sending payload:", payload);
-
-      const response = await uploadApi.post("/predict/GetPredictResult", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
+      
 
       navigate("/new-test/configure", {
         state: {

@@ -1,6 +1,7 @@
 // src/pages/Results.tsx
 
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 // import { useParams, useNavigate } from "react-router-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { SummaryCard } from "../components/results/SummaryCard";
@@ -10,7 +11,19 @@ import { ExportPanel } from "../components/results/ExportPanel";
 import { FilterPanel } from "../components/results/FilterPanel";
 import type { TestResults, DetectedIssue } from "../types/Results";
 import { mockResults } from "../mocks/ResultsData.ts";
-import { Loader2 } from "lucide-react";
+// import { Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+
+
+const RULE_BASED_SEVERITIES = ["critical", "high", "medium", "low"] as const;
+
+const toIssueType = (value?: string) => {
+  if (!value) return "visual";
+  if (value.includes("layout")) return "layout";
+  if (value.includes("content") || value.includes("font") || value.includes("text")) return "typography";
+  if (value.includes("component")) return "component";
+  return "visual";
+};
 
 export default function Results() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -40,10 +53,20 @@ export default function Results() {
   const [selectedIssue, setSelectedIssue] = useState<DetectedIssue | null>(null);
   const [showModal, setShowModal] = useState(false);
   
+  
   // Filters
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"severity" | "category">("severity");
+
+  const [collapsedPairs, setCollapsedPairs] = useState<Record<string, boolean>>({});
+
+  const togglePair = (pairKey: string) => {
+  setCollapsedPairs((prev) => ({
+    ...prev,
+    [pairKey]: !prev[pairKey],
+  }));
+};
 
   // Fetch results
   // useEffect(() => {
@@ -86,6 +109,117 @@ export default function Results() {
 //   }
 // };
 
+// === Robust pair-count computation ===
+
+// Helper: normalize a candidate pair id value to a string key
+const normalizePairId = (raw: any) => {
+  if (raw === null || raw === undefined) return "unknown";
+  if (typeof raw === "number") return String(raw);
+  if (typeof raw === "string") return raw;
+  // try common fields on objects
+  if (typeof raw === "object") {
+    return (
+      String(raw.pair_id ?? raw.pairId ?? raw.id ?? raw.pair ?? "unknown")
+    );
+  }
+  return String(raw);
+};
+
+/**
+ * Build canonicalAllPairs: a Set of unique pair ids for all pairs we know about.
+ * Sources (in preference):
+ *  1) If results.summary.total_pairs exists AND we have a reliable listing (e.g. predictionList or pairsFromState),
+ *     prefer deriving ids from predictionList or pairsFromState so IDs are accurate (not just a count).
+ *  2) predictionList (uploadResponseFromState?.results) — often contains pair_id and images
+ *  3) pairsFromState (navigation state) — if you passed pair objects when navigating
+ *  4) fallback: if none of the above provide explicit IDs, create synthetic ids based on index up to summary.total_pairs
+ */
+const canonicalAllPairs = useMemo(() => {
+  const set = new Set<string>();
+
+  // 1) If we have a predictionList (uploadResponseFromState.results), extract pair ids
+  if (Array.isArray(predictionList) && predictionList.length > 0) {
+    for (let i = 0; i < predictionList.length; i++) {
+      const p = predictionList[i];
+      // many shapes: pair_id, pairId, id
+      const candidate = p?.pair_id ?? p?.pairId ?? p?.id ?? p;
+      set.add(normalizePairId(candidate ?? i));
+    }
+    return set;
+  }
+
+  // 2) If pairsFromState (navigation) exists and is an array of pair objects or ids
+  if (Array.isArray(pairsFromState) && pairsFromState.length > 0) {
+    for (let i = 0; i < pairsFromState.length; i++) {
+      const p = pairsFromState[i];
+      const candidate = p?.pair_id ?? p?.pairId ?? p?.id ?? p;
+      set.add(normalizePairId(candidate ?? i));
+    }
+    return set;
+  }
+
+  // 3) If results.summary.total_pairs exists, but we don't have explicit ids,
+  // create synthetic ids as "pair_0", "pair_1", ... up to total.
+  const totalFromSummary = results?.summary?.total_pairs;
+  if (typeof totalFromSummary === "number" && totalFromSummary > 0) {
+    for (let i = 0; i < totalFromSummary; i++) {
+      set.add(`synthetic_${i}`); // synthetic keys, deterministic
+    }
+    return set;
+  }
+
+  // 4) Nothing found => return empty set
+  return set;
+}, [predictionList, pairsFromState, results?.summary?.total_pairs]);
+
+// Unique pair ids that have >=1 issue (derived from results.issues)
+const pairsWithIssuesSet = useMemo(() => {
+  const s = new Set<string>();
+  if (!Array.isArray(results?.issues) || results.issues.length === 0) return s;
+
+  for (const it of results.issues) {
+    // issue object may contain pair_id, pairId, pair etc.
+    const pid = (it as any).pair_id ?? (it as any).pairId ?? (it as any).pair ?? (it as any).pairIdBaseline ?? (it as any).pair_id_baseline ?? null;
+    // If issue doesn't include a pair id, try to infer from evidence URLs (less reliable)
+    if (pid == null) {
+      // nothing to do — we skip unknown
+      continue;
+    }
+    s.add(normalizePairId(pid));
+  }
+  return s;
+}, [results?.issues]);
+
+// Counts
+const allPairsCount = canonicalAllPairs.size;
+const pairsWithIssuesCount = pairsWithIssuesSet.size;
+
+// Pairs without issues are pairs that exist in canonicalAllPairs but are not present in pairsWithIssuesSet.
+// This handles the case where some pairs are present in allPairs but have no issues.
+const pairsWithoutIssuesCount = Math.max(
+  0,
+  allPairsCount - pairsWithIssuesCount
+);
+
+// Fallback: if canonicalAllPairs is empty but server provided summary.no_issues, fall back to that value
+const finalPairsWithoutIssuesCount = useMemo(() => {
+  if (allPairsCount > 0) return pairsWithoutIssuesCount;
+  const backendNoIssues = results?.summary?.no_issues;
+  if (typeof backendNoIssues === "number" && !Number.isNaN(backendNoIssues)) return backendNoIssues;
+  // fallback to 0
+  return 0;
+}, [allPairsCount, pairsWithoutIssuesCount, results?.summary?.no_issues]);
+
+// Debug (temporary — remove when confirmed)
+console.debug("pair-counts-debug:", {
+  allPairsCount,
+  pairsWithIssuesCount,
+  pairsWithoutIssuesCount,
+  finalPairsWithoutIssuesCount,
+  canonicalAllPairsSample: Array.from(canonicalAllPairs).slice(0, 6),
+  pairsWithIssuesSample: Array.from(pairsWithIssuesSet).slice(0, 6),
+});
+
 const fetchResults = async () => {
   try {
     setLoading(true);
@@ -93,6 +227,101 @@ const fetchResults = async () => {
 
     // If backend response in state, use it instead of mock
     if (predictionList.length > 0) {
+      const hasRuleBasedOutput = predictionList.some((x: any) => Array.isArray(x?.issues));
+
+      if (hasRuleBasedOutput) {
+        const issues = predictionList.flatMap((pair: any) => {
+          const pairIssues = Array.isArray(pair?.issues) ? pair.issues : [];
+          return pairIssues.map((issue: any, index: number) => {
+            const bbox = issue?.bbox_baseline || [0, 0, 0, 0];
+            const x1 = Number(bbox[0] || 0);
+            const y1 = Number(bbox[1] || 0);
+            const x2 = Number(bbox[2] || 0);
+            const y2 = Number(bbox[3] || 0);
+
+            const severity = RULE_BASED_SEVERITIES.includes(issue?.severity)
+              ? issue.severity
+              : "low";
+
+            const issueType = toIssueType(issue?.issue_type);
+
+            // return {
+            //   id: `${pair?.pair_id ?? "pair"}_${issue?.element_id_baseline ?? index}`,
+            //   issue_type: issueType,
+            return {
+              id: `${pair?.pair_id ?? "pair"}_${issue?.element_id_baseline ?? index}`,
+              pair_id: pair?.pair_id ?? -1,
+              issue_type: issueType,
+              severity,
+              category: issue?.issue_type || "visual_regression",
+              detected_between: {
+                environment_a: {
+                  browser: "Baseline",
+                  os: "Captured",
+                  device_type: "desktop",
+                },
+                environment_b: {
+                  browser: "Candidate",
+                  os: "Captured",
+                  device_type: "desktop",
+                },
+              },
+              description: `${issue?.class || "element"} changed between screenshots`,
+              explanation: `Detected a pixel-level regression on a matched ${issue?.class || "UI"} element. IoU=${issue?.iou ?? "n/a"}, changed_pixel_ratio=${issue?.pixel_metrics?.changed_pixel_ratio ?? "n/a"}, mean_abs_diff=${issue?.pixel_metrics?.mean_abs_diff ?? "n/a"}.`,
+              root_cause: issue?.issue_type || "visual_regression",
+              css_properties: ["pixel-diff", "position", "size", "style"],
+              suggested_fix: "Inspect the matched element in both screenshots and align layout/content/styles for parity.",
+              evidence: {
+                screenshot_a_url: pair?.images?.baseline || "/mock/screenshot_a.png",
+                screenshot_b_url: pair?.images?.candidate || "/mock/screenshot_b.png",
+                bounding_box: {
+                  x: x1,
+                  y: y1,
+                  width: Math.max(0, x2 - x1),
+                  height: Math.max(0, y2 - y1),
+                },
+              },
+              visual_impact: issue?.class || "ui_element",
+              occurrence_frequency: "common",
+            };
+          });
+        });
+
+        const severityCount = {
+          critical: issues.filter((x: any) => x.severity === "critical").length,
+          high: issues.filter((x: any) => x.severity === "high").length,
+          medium: issues.filter((x: any) => x.severity === "medium").length,
+          low: issues.filter((x: any) => x.severity === "low").length,
+        };
+
+        const now = new Date().toISOString();
+        const totalPairs = predictionList.length;
+
+        const builtResults: TestResults = {
+          session_id: sessionId || "demo",
+          test_type: "upload",
+          comparison_mode: "desktop_vs_desktop",
+          summary: {
+            total_pairs: totalPairs,
+            issues_detected: issues.length,
+            no_issues: Math.max(0, totalPairs - issues.length),
+            high_severity: severityCount.critical + severityCount.high,
+            medium_severity: severityCount.medium,
+            low_severity: severityCount.low,
+          },
+          issues,
+          test_metadata: {
+            url: "",
+            created_at: now,
+            completed_at: now,
+            processing_time_seconds: 0,
+          },
+        };
+
+        setResults(builtResults);
+        return;
+      }
+
       const totalPairs = predictionList.length;
 
       const bugItems = predictionList.filter((x: any) => x?.prediction?.is_bug === true);
@@ -170,12 +399,27 @@ const fetchResults = async () => {
     })
     .sort((a, b) => {
       if (sortBy === "severity") {
-        const severityOrder = { high: 0, medium: 1, low: 2 };
+        // const severityOrder = { high: 0, medium: 1, low: 2 };
+        const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
         return severityOrder[a.severity] - severityOrder[b.severity];
       } else {
         return a.category.localeCompare(b.category);
       }
     }) || [];
+  //   const groupedIssues = filteredIssues.reduce<Record<string, typeof filteredIssues>>((acc, issue) => {
+  //   const pid = (issue as any).pair_id ?? "unknown";
+  //   const key = `pair_${pid}`;
+  //   if (!acc[key]) acc[key] = [];
+  //   acc[key].push(issue);
+  //   return acc;
+  // }, {});
+  const groupedIssues = filteredIssues.reduce<Record<string, DetectedIssue[]>>((acc, issue) => {
+  const pid = (issue as any).pair_id ?? "unknown";
+  const key = `pair_${pid}`;
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(issue);
+  return acc;
+}, {});
 
   // Loading state
   if (loading) {
@@ -229,7 +473,16 @@ const fetchResults = async () => {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Summary Card */}
-        <SummaryCard summary={results.summary} metadata={results.test_metadata} />
+        {/* <SummaryCard summary={results.summary} metadata={results.test_metadata} /> */}
+                {/* Summary Card */}
+        {/* Summary Card */}
+        {/* Summary Card */}
+<SummaryCard
+  summary={results.summary}
+  metadata={results.test_metadata}
+  pairsWithIssuesCount={pairsWithIssuesCount}
+  pairsWithoutIssuesCount={pairsWithoutIssuesCount}
+/>
 
         {/* Export Panel */}
         <ExportPanel sessionId={sessionId!} results={results} />
@@ -271,8 +524,67 @@ const fetchResults = async () => {
                 onViewEvidence={handleViewEvidence}
               />
             ))
+            
           )}
         </div> */}
+
+        {/* Issues List */}
+<div className="space-y-4">
+  {filteredIssues.length === 0 ? (
+    <div className="bg-white rounded-xl p-12 text-center border">
+      <div className="text-6xl mb-4">🎉</div>
+      <h3 className="text-xl font-semibold text-slate-800 mb-2">
+        {results.issues.length === 0 ? "No Issues Detected!" : "No Issues Match Filters"}
+      </h3>
+      <p className="text-slate-600">
+        {results.issues.length === 0
+          ? "All screenshots are consistent across browsers."
+          : "Try adjusting your filters to see more results."}
+      </p>
+    </div>
+  ) : (
+    Object.entries(groupedIssues).map(([pairKey, pairIssueList]) => {
+  const pairLabel = pairKey.replace("pair_", "");
+  const isCollapsed = !!collapsedPairs[pairKey];
+
+  return (
+    <section key={pairKey} className="bg-white border rounded-xl">
+      <button
+        type="button"
+        onClick={() => togglePair(pairKey)}
+        className="w-full px-4 py-3 flex items-center justify-between border-b"
+      >
+        <div className="flex items-center gap-2">
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4 text-slate-600" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-slate-600" />
+          )}
+          <h3 className="text-lg font-bold text-slate-800">Pair {pairLabel}</h3>
+        </div>
+
+        <span className="text-sm text-slate-500">
+          {pairIssueList.length} issue{pairIssueList.length > 1 ? "s" : ""}
+        </span>
+      </button>
+
+      {!isCollapsed && (
+        <div className="p-4 space-y-4">
+          {pairIssueList.map((issue, index) => (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              index={index}
+              onViewEvidence={handleViewEvidence}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+})
+  )}
+</div>
       </div>
 
       {/* Evidence Modal */}

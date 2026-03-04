@@ -314,15 +314,187 @@
 //   );
 // }
 
+
+
+
+// import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+// import type { TestResults } from "../../types/Results";
+
+// interface Props {
+//   summary: TestResults["summary"];
+//   metadata: TestResults["test_metadata"];
+// }
+
+// export function SummaryCard({ summary, metadata }: Props) {
+//   const formatDuration = (seconds: number) => {
+//     if (seconds < 60) return `${seconds}s`;
+//     const minutes = Math.floor(seconds / 60);
+//     const secs = seconds % 60;
+//     return `${minutes}m ${secs}s`;
+//   };
+
+//   const formatDate = (dateString: string) =>
+//     new Date(dateString).toLocaleString("en-US", {
+//       month: "short",
+//       day: "numeric",
+//       year: "numeric",
+//       hour: "2-digit",
+//       minute: "2-digit",
+//     });
+
+//   return (
+//     <div className="rounded-2xl overflow-hidden border shadow-sm mb-6 bg-white">
+//       {/* Top Banner */}
+//       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-5">
+//         <div className="flex items-start justify-between gap-6 flex-wrap">
+//           <div>
+//             <h2 className="text-2xl font-bold">Test Completed</h2>
+
+//             {metadata.url && (
+//               <p className="text-sm text-blue-100 mt-1">
+//                 URL: <span className="font-semibold text-white">{metadata.url}</span>
+//               </p>
+//             )}
+
+//             <p className="text-sm text-blue-100 mt-1">
+//               Completed {formatDate(metadata.completed_at)} •{" "}
+//               {formatDuration(metadata.processing_time_seconds)}
+//             </p>
+//           </div>
+
+//           <div className="text-right">
+//             <div className="text-sm text-blue-100">Total Pairs</div>
+//             <div className="text-3xl font-bold">{summary.total_pairs}</div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Body */}
+//       <div className="p-6">
+//         {/* Issues Row */}
+//         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//           <div className="rounded-xl border bg-slate-50 p-5">
+//             <div className="flex items-center justify-between">
+//               <div className="flex items-center gap-2 text-slate-700 font-semibold">
+//                 <AlertTriangle className="w-5 h-5 text-amber-600" />
+//                 Issues Found
+//               </div>
+//               <span className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+//                 Attention
+//               </span>
+//             </div>
+//             <div className="text-4xl font-bold text-slate-800 mt-3">
+//               {summary.issues_detected}
+//             </div>
+//             <p className="text-xs text-slate-500 mt-1">
+//               UI differences detected across environments
+//             </p>
+//           </div>
+
+//           <div className="rounded-xl border bg-slate-50 p-5">
+//             <div className="flex items-center justify-between">
+//               <div className="flex items-center gap-2 text-slate-700 font-semibold">
+//                 <CheckCircle className="w-5 h-5 text-green-600" />
+//                 No Issues
+//               </div>
+//               <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
+//                 Passed
+//               </span>
+//             </div>
+//             <div className="text-4xl font-bold text-slate-800 mt-3">
+//               {summary.no_issues}
+//             </div>
+//             <p className="text-xs text-slate-500 mt-1">
+//               Screenshots matched consistently
+//             </p>
+//           </div>
+//         </div>
+
+//         {/* Severity */}
+//         {/* <div className="mt-7 flex items-center justify-between flex-wrap gap-3">
+//           <h4 className="text-lg font-bold text-slate-800">Severity Summary</h4>
+//           <p className="text-sm text-slate-500">
+//             Breakdown of detected issues by severity
+//           </p>
+//         </div> */}
+
+//         {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4"> */}
+//           {/* High */}
+//           {/* <div className="rounded-xl border p-5 bg-white">
+//             <div className="flex items-center justify-between">
+//               <div className="flex items-center gap-2 font-semibold text-slate-700">
+//                 <XCircle className="w-5 h-5 text-red-600" />
+//                 High
+//               </div>
+//               <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+//             </div>
+//             <div className="text-3xl font-bold text-slate-800 mt-3">
+//               {summary.high_severity}
+//             </div>
+//             <p className="text-xs text-slate-500 mt-1">
+//               Major UI impact / must-fix
+//             </p>
+//           </div>
+
+//           {/* Medium */}
+//           {/* <div className="rounded-xl border p-5 bg-white">
+//             <div className="flex items-center justify-between">
+//               <div className="flex items-center gap-2 font-semibold text-slate-700">
+//                 <AlertTriangle className="w-5 h-5 text-amber-600" />
+//                 Medium
+//               </div>
+//               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+//             </div>
+//             <div className="text-3xl font-bold text-slate-800 mt-3">
+//               {summary.medium_severity}
+//             </div>
+//             <p className="text-xs text-slate-500 mt-1">
+//               Noticeable differences
+//             </p>
+//           </div> */}
+
+//           {/* Low */}
+//           {/* <div className="rounded-xl border p-5 bg-white">
+//             <div className="flex items-center justify-between">
+//               <div className="flex items-center gap-2 font-semibold text-slate-700">
+//                 <CheckCircle className="w-5 h-5 text-green-600" />
+//                 Low
+//               </div>
+//               <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+//             </div>
+//             <div className="text-3xl font-bold text-slate-800 mt-3">
+//               {summary.low_severity}
+//             </div>
+//             <p className="text-xs text-slate-500 mt-1">
+//               Minor UI differences
+//             </p>
+//           </div> */}
+//         {/* </div> */} 
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+// src/components/results/SummaryCard.tsx
 import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import type { TestResults } from "../../types/Results";
 
 interface Props {
   summary: TestResults["summary"];
   metadata: TestResults["test_metadata"];
+  pairsWithIssuesCount?: number;
+   pairsWithoutIssuesCount?: number; 
 }
 
-export function SummaryCard({ summary, metadata }: Props) {
+export function SummaryCard({
+  summary,
+  metadata,
+  pairsWithIssuesCount = 0,
+  pairsWithoutIssuesCount = 0,
+}: Props) {
   const formatDuration = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
@@ -354,8 +526,7 @@ export function SummaryCard({ summary, metadata }: Props) {
             )}
 
             <p className="text-sm text-blue-100 mt-1">
-              Completed {formatDate(metadata.completed_at)} •{" "}
-              {formatDuration(metadata.processing_time_seconds)}
+              Completed {formatDate(metadata.completed_at)} • {formatDuration(metadata.processing_time_seconds)}
             </p>
           </div>
 
@@ -380,12 +551,15 @@ export function SummaryCard({ summary, metadata }: Props) {
                 Attention
               </span>
             </div>
-            <div className="text-4xl font-bold text-slate-800 mt-3">
-              {summary.issues_detected}
+            <p className="text-xs text-slate-500 mt-1">UI differences detected across environments</p>
+
+            <br></br>
+            <div className="mt-3 text-xl font-bold text-slate-800">
+              Pairs With Issues: {" "} 
+              <span className="font-bold text-slate-800">{pairsWithIssuesCount}</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              UI differences detected across environments
-            </p>
+
+            <div className="text-md text-slate-800 mt-3">Issues Count: {summary.issues_detected}</div>
           </div>
 
           <div className="rounded-xl border bg-slate-50 p-5">
@@ -398,25 +572,26 @@ export function SummaryCard({ summary, metadata }: Props) {
                 Passed
               </span>
             </div>
-            <div className="text-4xl font-bold text-slate-800 mt-3">
-              {summary.no_issues}
+             <p className="text-xs text-slate-500 mt-1">Screenshots matched consistently</p>
+
+            <br></br>
+             <div className="mt-3 text-xl font-bold text-slate-800">
+              Pairs Without Issues:{" "}
+              <span className="font-bold text-slate-800">{pairsWithoutIssuesCount}</span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Screenshots matched consistently
-            </p>
+            {/* <div className="text-md text-slate-800 mt-3">{summary.no_issues}</div> */}
+
+           
           </div>
         </div>
 
-        {/* Severity */}
-        <div className="mt-7 flex items-center justify-between flex-wrap gap-3">
+        {/* Severity summary unchanged */}
+        {/* <div className="mt-7 flex items-center justify-between flex-wrap gap-3">
           <h4 className="text-lg font-bold text-slate-800">Severity Summary</h4>
-          <p className="text-sm text-slate-500">
-            Breakdown of detected issues by severity
-          </p>
-        </div>
+          <p className="text-sm text-slate-500">Breakdown of detected issues by severity</p>
+        </div> */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-          {/* High */}
+        {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">\
           <div className="rounded-xl border p-5 bg-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold text-slate-700">
@@ -425,15 +600,11 @@ export function SummaryCard({ summary, metadata }: Props) {
               </div>
               <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
             </div>
-            <div className="text-3xl font-bold text-slate-800 mt-3">
-              {summary.high_severity}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Major UI impact / must-fix
-            </p>
+            <div className="text-3xl font-bold text-slate-800 mt-3">{summary.high_severity}</div>
+            <p className="text-xs text-slate-500 mt-1">Major UI impact / must-fix</p>
           </div>
 
-          {/* Medium */}
+         
           <div className="rounded-xl border p-5 bg-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold text-slate-700">
@@ -442,15 +613,11 @@ export function SummaryCard({ summary, metadata }: Props) {
               </div>
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
             </div>
-            <div className="text-3xl font-bold text-slate-800 mt-3">
-              {summary.medium_severity}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Noticeable differences
-            </p>
+            <div className="text-3xl font-bold text-slate-800 mt-3">{summary.medium_severity}</div>
+            <p className="text-xs text-slate-500 mt-1">Noticeable differences</p>
           </div>
 
-          {/* Low */}
+          
           <div className="rounded-xl border p-5 bg-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold text-slate-700">
@@ -459,14 +626,10 @@ export function SummaryCard({ summary, metadata }: Props) {
               </div>
               <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
             </div>
-            <div className="text-3xl font-bold text-slate-800 mt-3">
-              {summary.low_severity}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Minor UI differences
-            </p>
+            <div className="text-3xl font-bold text-slate-800 mt-3">{summary.low_severity}</div>
+            <p className="text-xs text-slate-500 mt-1">Minor UI differences</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

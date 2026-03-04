@@ -130,8 +130,9 @@ from pydantic import BaseModel
 #from app.service.PredictUplaodImage import predict_result_by_image
 from app.service.Screenshot import capture
 from app.service.detectElements import detect_elements
+from app.service.RuleBasedComparator import compare_screenshots_rule_based
 
-from app.modal import PredictRequest, PredictRequestByUrl
+from app.modal import PredictRequest, PredictRequestByUrl, RuleBasedCompareRequest
 
 # Check this line! It must be named 'router'
 router = APIRouter(prefix="/predict", tags=["Prediction"])
@@ -164,6 +165,16 @@ async def get_predict_result(payload: PredictRequestByUrl):
         "status": "success",
         "message": f"Captured {len(results)} screenshots.",
         "results": results
+    }
+
+
+@router.post("/CompareRuleBased")
+async def compare_rule_based(payload: RuleBasedCompareRequest):
+    results = compare_screenshots_rule_based(payload)
+    return {
+        "status": "success",
+        "message": "Rule-based UI comparison finished.",
+        "results": results,
     }
 
 

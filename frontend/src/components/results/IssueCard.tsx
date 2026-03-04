@@ -10,12 +10,14 @@ interface Props {
 
 export function IssueCard({ issue, index, onViewEvidence }: Props) {
   const severityColors = {
+    critical: "bg-red-100 border-red-300 text-red-900",
     high: "bg-red-50 border-red-200 text-red-700",
     medium: "bg-yellow-50 border-yellow-200 text-yellow-700",
     low: "bg-green-50 border-green-200 text-green-700"
   };
 
   const severityBadgeColors = {
+    critical: "bg-red-200 text-red-900 border-red-400",
     high: "bg-red-100 text-red-800 border-red-300",
     medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
     low: "bg-green-100 text-green-800 border-green-300"

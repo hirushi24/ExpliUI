@@ -151,8 +151,8 @@ export default function UrlPreviewPage() {
     imgA?.image_url || firstPair?.screenshotAUrl || "/mock/screenshot_a.png";
   const screenshotBUrl =
     imgB?.image_url || firstPair?.screenshotBUrl || "/mock/screenshot_b.png";
-  const screenshotAPath = imgA?.image_path;
-  const screenshotBPath = imgB?.image_path;
+  // const screenshotAPath = imgA?.image_path;
+  // const screenshotBPath = imgB?.image_path;
   const envA = imgA
     ? { deviceType: "desktop", browser: imgA.browser, os: imgA.os }
     : firstPair?.envA;
@@ -163,46 +163,136 @@ export default function UrlPreviewPage() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const imageUrlToBase64 = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image for base64 conversion: ${url}`);
+  }
 
-  const handleStartAnalysis = async () => {
+  const blob = await response.blob();
+
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result)); // data:image/png;base64,...
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+//   const handleStartAnalysis = async () => {
+//   try {
+//     setIsAnalyzing(true);
+
+//     const payload = {
+//       // type:2,
+//       user_id: Number(localStorage.getItem("Id")),
+//       // pair_list: [
+//        pair_id: pairId,
+//       image_list: [
+//         {
+//           // pair_id: pairId,
+//           // image_list: [
+//           //   {
+//           //     image_id: 1,
+//           //     image_name: imgA?.image_url || "url_capture_A.png",
+//           //     image_base64: screenshotAPath, 
+//           //     device_type: "desktop",
+//           //     browser: (envA?.browser || "").toLowerCase(),
+//           //     os: (envA?.os || "").toLowerCase(),
+//           //   },
+//           //   {
+//           //     image_id: 2,
+//           //     image_name: imgB?.image_url || "url_capture_B.png",
+//           //     image_base64: screenshotBPath, 
+//           //     device_type: "desktop",
+//           //     browser: (envB?.browser || "").toLowerCase(),
+//           //     os: (envB?.os || "").toLowerCase(),
+//           //   },
+//           // ],
+//           image_name: imgA?.image_name || "url_capture_A.png",
+//           image_base64: screenshotAPath,
+//         },
+//         {
+//           image_name: imgB?.image_name || "url_capture_B.png",
+//           image_base64: screenshotBPath,
+//         },
+//       ],
+//     };
+
+//     // console.log("Sending GetPredictResult payload (URL flow):", payload);
+//     console.log("Sending CompareRuleBased payload (URL flow):", payload);
+
+//     // const response = await uploadApi.post("/predict/GetPredictResult", payload, {
+//     const response = await uploadApi.post("/predict/CompareRuleBased", payload, {
+//       headers: { "Content-Type": "application/json" },
+//     });
+
+//     console.log(response)
+
+//     navigate("/results/demo", {
+//       state: {
+//         pairs: [
+//           {
+//             id: pairId,
+//             metaA: envA,
+//             metaB: envB,
+//             comparisonMode: "desktop-desktop",
+//             stage: "confirmed",
+//           },
+//         ],
+//         // uploadResponse: response.data,
+//         uploadResponse: {
+//           ...response.data,
+//           results: [response.data?.results],
+//         },
+//       },
+//     });
+//   } catch (err: any) {
+//     console.error("Start analysis error:", err);
+//     console.log("Backend detail:", err?.response?.data);
+//     alert(JSON.stringify(err?.response?.data, null, 2));
+//   } finally {
+//     setIsAnalyzing(false);
+//   }
+// };
+
+
+const handleStartAnalysis = async () => {
   try {
     setIsAnalyzing(true);
 
+    // Convert captured screenshot URLs to base64 data URLs
+    const [base64A, base64B] = await Promise.all([
+      imageUrlToBase64(screenshotAUrl),
+      imageUrlToBase64(screenshotBUrl),
+    ]);
+
     const payload = {
-      type:2,
       user_id: Number(localStorage.getItem("Id")),
-      pair_list: [
+      pair_id: pairId,
+      image_list: [
         {
-          pair_id: pairId,
-          image_list: [
-            {
-              image_id: 1,
-              image_name: imgA?.image_url || "url_capture_A.png",
-              image_base64: screenshotAPath, 
-              device_type: "desktop",
-              browser: (envA?.browser || "").toLowerCase(),
-              os: (envA?.os || "").toLowerCase(),
-            },
-            {
-              image_id: 2,
-              image_name: imgB?.image_url || "url_capture_B.png",
-              image_base64: screenshotBPath, 
-              device_type: "desktop",
-              browser: (envB?.browser || "").toLowerCase(),
-              os: (envB?.os || "").toLowerCase(),
-            },
-          ],
+          image_name: imgA?.image_name || "url_capture_A.png",
+          image_base64: base64A,
+        },
+        {
+          image_name: imgB?.image_name || "url_capture_B.png",
+          image_base64: base64B,
         },
       ],
     };
 
-    console.log("Sending GetPredictResult payload (URL flow):", payload);
-
-    const response = await uploadApi.post("/predict/GetPredictResult", payload, {
-      headers: { "Content-Type": "application/json" },
+    console.log("Sending CompareRuleBased payload (URL flow):", {
+      ...payload,
+      image_list: payload.image_list.map((img) => ({
+        ...img,
+        image_base64: `${img.image_base64.slice(0, 30)}...`, // don't log full base64
+      })),
     });
 
-    console.log(response)
+    const response = await uploadApi.post("/predict/CompareRuleBased", payload, {
+      headers: { "Content-Type": "application/json" },
+    });
 
     navigate("/results/demo", {
       state: {
@@ -215,7 +305,10 @@ export default function UrlPreviewPage() {
             stage: "confirmed",
           },
         ],
-        uploadResponse: response.data,
+        uploadResponse: {
+          ...response.data,
+          results: [response.data?.results],
+        },
       },
     });
   } catch (err: any) {
