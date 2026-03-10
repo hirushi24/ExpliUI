@@ -298,6 +298,7 @@ def capture(req: PredictRequestByUrl):
     base_url = "http://127.0.0.1:8080/static"
 
     saved_paths = []
+    errors = []
 
     for pair in req.image_list:
         timestamp = int(time.time() * 1000)
@@ -325,8 +326,17 @@ def capture(req: PredictRequestByUrl):
             saved_paths.append(saved_path)
 
         except Exception as e:
-            print(f"Error capturing screenshot for URL {req.image_url} "
-                  f"with browser {pair.browser}: {e}")
+            # print(f"Error capturing screenshot for URL {req.image_url} "
+            #       f"with browser {pair.browser}: {e}")
+            error_msg = (
+                f"Error capturing screenshot for URL {req.image_url} "
+                f"with browser {pair.browser}: {e}"
+            )
+            print(error_msg)
+            errors.append(error_msg)
+
+    if errors:
+        raise RuntimeError(" | ".join(errors))
 
     return saved_paths
 

@@ -124,7 +124,7 @@
 
 
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 #from app.service.PredictUplaodImage import predict_result_by_image
@@ -159,7 +159,12 @@ async def get_predict_result(payload: PredictRequest):
 
 @router.post("/CaptureByUrl")
 async def get_predict_result(payload: PredictRequestByUrl):
-    results = capture(payload)
+    # results = capture(payload)
+
+    try:
+        results = capture(payload)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"CaptureByUrl failed: {exc}") from exc
 
     return {
         "status": "success",

@@ -12,3 +12,4 @@ pytesseract
 Pillow
 ultralytics
 selenium webdriver-manager
+google-generativeai

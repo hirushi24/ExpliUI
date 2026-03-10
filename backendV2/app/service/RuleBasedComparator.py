@@ -855,6 +855,8 @@ from typing import Any
 
 import cv2
 import numpy as np
+import google.generativeai as genai
+import os
 from fastapi import HTTPException
 
 from app.modal import RuleBasedCompareRequest
@@ -879,6 +881,80 @@ def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> dict[str
 
     elements_1 = _detect_ui_elements(img1)
     elements_2 = _detect_ui_elements(img2)
+    print(elements_1)
+
+    key=os.getenv("GEMINI_API_KEY")
+    genai.configure(api_key=key)
+
+    model="gemini-3-flash-preview"
+
+    # Initialize the latest model
+    model = genai.GenerativeModel('gemini-3-flash-preview')
+
+    prompt = f"""
+        You are a frontend UI regression analysis assistant.
+
+        Your task is to compare two JSON arrays extracted from two separate webpage screenshots:
+        1. "baseline_json" = expected/original UI elements
+        2. "comparison_json" = changed/new UI elements
+
+        Each element may contain:
+        - class: UI element type such as button, link, text, image, field, heading
+        - confidence: detection confidence score
+        - bbox: [x1, y1, x2, y2]
+        - text: OCR-extracted visible text
+
+        Your goal is to identify meaningful UI differences between the two JSON inputs and explain them as a frontend technical issue.
+
+        Important rules:
+        - Focus only on meaningful visual or structural UI changes such as:
+        - missing elements
+        - newly appeared elements
+        - shifted alignment
+        - changed position
+        - changed size
+        - text truncation
+        - overlap
+        - wrong element type classification if strongly implied by context
+        - spacing inconsistency
+        - layout breakage
+        - Ignore very low-confidence noise or unclear OCR fragments unless they clearly contribute to a visible issue.
+        - Do not mention confidence scores in the final answer unless essential for reasoning.
+        - Do not invent details that are not supported by the JSON comparison.
+        - Base the explanation only on the provided JSON data.
+        - Keep the explanation technical, concise, and actionable.
+        - Suggested fixes must be practical frontend/CSS-oriented recommendations.
+        - AffectedCSSProperties must contain only likely CSS properties related to the issue.
+        - Return exactly one JSON object.
+        - Return only valid JSON.
+        - Do not include markdown fences.
+        - Do not include any extra explanation before or after the JSON.
+
+        Output format:
+        {
+        "Issue": "<technical explanation of the detected UI issue>",
+        "SuggestedFix": "<technical suggestion to resolve the issue>",
+        "AffectedCSSProperties": ["property1", "property2"]
+        }
+
+        Reasoning guidance:
+        - Compare elements by class, text similarity, and approximate bbox location.
+        - If text in one image appears truncated, broken, split, or partially missing in the other image, describe it as likely text overflow, wrapping, clipping, or container sizing issue.
+        - If the same logical element exists in both but its bbox significantly changes, describe it as alignment, spacing, or responsive layout shift.
+        - If an element appears only in one JSON, describe it as missing or newly introduced UI component.
+        - If multiple nearby text/link elements become fragmented, infer possible layout compression, wrapping, or overflow issues.
+
+        baseline_json: <PASTE_BASELINE_JSON_HERE>
+		baseline_Screenshot_taken_OS: <OS>
+		baseline_Screenshot_taken_Browser: <Browser>
+
+        comparison_json: <PASTE_COMPARISON_JSON_HERE>
+		comparison_Screenshot_taken_OS: <OS>
+		comparison_Screenshot_taken_Browser: <Browser>
+    """
+
+    response = model.generate_content("Give me a one-sentence pitch for a sci-fi novel.")
+    print(response.text)
 
     matches, unmatched_first, unmatched_second = _match_elements(elements_1, elements_2)
     issues = _find_pixel_issues(img1, img2, matches)

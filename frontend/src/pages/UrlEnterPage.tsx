@@ -929,6 +929,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Globe, Camera, ArrowRight, Monitor } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button";
+import { uploadApi } from "../api/clients";
 
 type SelectedOS = "" | "windows" | "macos";
 
@@ -944,9 +945,16 @@ const MAC_BROWSERS = [
   { value: "firefox", label: "Firefox" },
 ];
 
+function normalizeHttpUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 function isValidHttpUrl(value: string) {
   try {
-    const u = new URL(value);
+    // const u = new URL(value);
+    const u = new URL(normalizeHttpUrl(value));
     return u.protocol === "http:" || u.protocol === "https:";
   } catch {
     return false;
@@ -969,6 +977,7 @@ export default function UrlEnterPage() {
   const osA = selectedOS;
   const osB = selectedOS;
 
+  const normalizedUrl = normalizeHttpUrl(url);
   const urlOk = isValidHttpUrl(url);
 
   // Environments enabled only when URL valid + OS selected
@@ -993,7 +1002,7 @@ export default function UrlEnterPage() {
 
   const canCapture = urlOk && metaOk;
 
-  const generateFiveDigitId = () => Math.floor(10000 + Math.random() * 90000);
+  // const generateFiveDigitId = () => Math.floor(10000 + Math.random() * 90000);
   const generatePairId = () => Math.floor(10 + Math.random() * 90000);
 
   const [isCapturing, setIsCapturing] = useState(false);
@@ -1011,7 +1020,8 @@ export default function UrlEnterPage() {
       const payload = {
         user_id: Number(localStorage.getItem("Id")),
         pair_id: pairId,
-        image_url: url,
+        // image_url: url,
+        image_url: normalizedUrl,
         image_list: [
           { browser: browserA, os: osA },
           { browser: browserB, os: osB },
@@ -1020,18 +1030,20 @@ export default function UrlEnterPage() {
 
       console.log("CaptureByUrl payload:", payload);
 
-      const res = await fetch("http://127.0.0.1:8080/api/predict/CaptureByUrl", {
-        method: "POST",
+      // const res = await fetch("http://127.0.0.1:8080/api/predict/CaptureByUrl", {
+      //   method: "POST",
+      const res = await uploadApi.post("/predict/CaptureByUrl", payload, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        // body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "CaptureByUrl failed");
-      }
+      // if (!res.ok) {
+      //   const text = await res.text();
+      //   throw new Error(text || "CaptureByUrl failed");
+      // }
 
-      const data = await res.json();
+      // const data = await res.json();
+      const data = res.data;
       console.log("CaptureByUrl response:", data);
 
       if (!data?.results || data.results.length < 2) {
@@ -1043,7 +1055,8 @@ export default function UrlEnterPage() {
 
       navigate("/new-test/url/preview", {
         state: {
-          url,
+          // url,
+          url: normalizedUrl,
           sessionId: Number(localStorage.getItem("SessionId")),
           pairId: pairId,
           comparisonMode: "desktop_vs_desktop",

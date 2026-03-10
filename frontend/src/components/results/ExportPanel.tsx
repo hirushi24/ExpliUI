@@ -18,7 +18,7 @@ export function ExportPanel({ sessionId, results }: Props) {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `expliui-report-${sessionId}.pdf`;
+      link.download = `expliuireport.pdf`;
       link.click();
     } catch (error) {
       console.error('Export PDF failed:', error);
