@@ -411,7 +411,7 @@ export default function UploadTest() {
       const userId = Number(localStorage.getItem("Id"));
 
       const results = await Promise.all(
-        readyPairs.map(async (pair) => {
+        readyPairs.map(async (pair, i) => {
           if (!pair.fileA || !pair.fileB) return null;
 
           const base64A = await fileToBase64(pair.fileA);
@@ -419,15 +419,21 @@ export default function UploadTest() {
 
           const payload = {
             user_id: userId,
-            pair_id: pair.id,
+            pair_id: pair.id ?? i,
             image_list: [
               {
                 image_name: pair.fileA.name,
                 image_base64: base64A,
+                browser: pair.metaA.browser.toLowerCase(),
+                os: pair.metaA.os.toLowerCase(),
+                device_type: pair.metaA.deviceType,
               },
               {
                 image_name: pair.fileB.name,
                 image_base64: base64B,
+                browser: pair.metaB.browser.toLowerCase(),
+                os: pair.metaB.os.toLowerCase(),
+                device_type: pair.metaB.deviceType,
               },
             ],
           };

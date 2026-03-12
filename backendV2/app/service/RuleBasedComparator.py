@@ -850,6 +850,7 @@
 
 import base64
 from dataclasses import dataclass
+import json
 from pathlib import Path
 from typing import Any
 
@@ -857,46 +858,71 @@ import cv2
 import numpy as np
 import google.generativeai as genai
 import os
+import asyncio
+import httpx
 from fastapi import HTTPException
+from dotenv import load_dotenv
+from ultralytics import YOLO
 
 from app.modal import RuleBasedCompareRequest
 
+load_dotenv()
 
 @dataclass
 class DetectedElement:
-    element_id: str
     class_name: str
     bbox: list[int]
     confidence: float
+    text: str
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={GEMINI_API_KEY}"
 
-def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> dict[str, Any]:
+async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> dict[str, Any]:
     if len(payload.image_list) != 2:
         raise HTTPException(status_code=400, detail="Exactly 2 screenshots are required for rule-based comparison")
+    
+    BEST_MODEL_PATH = os.getenv("UI_MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV3.pt")
+    
+    try:
+        best_model = YOLO(BEST_MODEL_PATH)
+        print("Model loaded successfully!")
+    except Exception as e:
+        print("Failed to load model:")
+        print(e)
 
     saved_paths = _save_screenshots(payload.user_id, payload.pair_id, payload.image_list)
 
     img1 = _read_image(saved_paths[0])
     img2 = _read_image(saved_paths[1])
 
-    elements_1 = _detect_ui_elements(img1)
-    elements_2 = _detect_ui_elements(img2)
-    print(elements_1)
+    #elements_1 = _detect_ui_elements(img1)
+   # elements_2 = _detect_ui_elements(img2)
 
-    key=os.getenv("GEMINI_API_KEY")
-    genai.configure(api_key=key)
+    element_Json = get_ui_elements(saved_paths[0], saved_paths[1], best_model)
 
-    model="gemini-3-flash-preview"
+    baseline_json = element_Json["base_image_elements"]
+    comparison_json = element_Json["comparison_image_elements"]
 
-    # Initialize the latest model
-    model = genai.GenerativeModel('gemini-3-flash-preview')
+    matches, unmatched_first, unmatched_second = _match_elements(baseline_json, comparison_json)
+    issues = _find_pixel_issues(img1, img2, matches)
 
-    prompt = f"""
+    # Now, extract just the 'source' elements from the matches
+    matched_baseline_elements = [m[0] for m in matches]
+
+    # If you also need the 'target' elements from the second image:
+    matched_candidate_elements = [m[1] for m in matches]
+
+    user_prompt = f"""
         You are a frontend UI regression analysis assistant.
 
         Your task is to compare two JSON arrays extracted from two separate webpage screenshots:
         1. "baseline_json" = expected/original UI elements
-        2. "comparison_json" = changed/new UI elements
+        2. "baseline_Screenshot_taken_OS" = OS of the baseline screenshot
+        3. "baseline_Screenshot_taken_Browser" = Browser of the baseline screenshot
+        4. "comparison_json" = changed/new UI elements
+        5. "comparison_Screenshot_taken_OS" = OS of the comparison screenshot
+        6. "comparison_Screenshot_taken_Browser" = Browser of the comparison screenshot
 
         Each element may contain:
         - class: UI element type such as button, link, text, image, field, heading
@@ -931,11 +957,11 @@ def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> dict[str
         - Do not include any extra explanation before or after the JSON.
 
         Output format:
-        {
+        {{
         "Issue": "<technical explanation of the detected UI issue>",
         "SuggestedFix": "<technical suggestion to resolve the issue>",
         "AffectedCSSProperties": ["property1", "property2"]
-        }
+        }}
 
         Reasoning guidance:
         - Compare elements by class, text similarity, and approximate bbox location.
@@ -944,48 +970,90 @@ def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> dict[str
         - If an element appears only in one JSON, describe it as missing or newly introduced UI component.
         - If multiple nearby text/link elements become fragmented, infer possible layout compression, wrapping, or overflow issues.
 
-        baseline_json: <PASTE_BASELINE_JSON_HERE>
-		baseline_Screenshot_taken_OS: <OS>
-		baseline_Screenshot_taken_Browser: <Browser>
+        baseline_json: {matched_baseline_elements}
+		baseline_Screenshot_taken_OS: {payload.image_list[0].os}
+		baseline_Screenshot_taken_Browser: {payload.image_list[0].browser}
 
-        comparison_json: <PASTE_COMPARISON_JSON_HERE>
-		comparison_Screenshot_taken_OS: <OS>
-		comparison_Screenshot_taken_Browser: <Browser>
+        comparison_json: {matched_candidate_elements}
+		comparison_Screenshot_taken_OS: {payload.image_list[1].os}
+		comparison_Screenshot_taken_Browser: {payload.image_list[1].browser}
     """
+    # The user prompt is designed to guide the Gemini LLM in analyzing the two sets of detected UI elements and generating a concise technical explanation of any meaningful differences, along with practical suggestions for fixes and relevant CSS properties. The prompt emphasizes the importance of focusing on significant visual or structural changes while ignoring low-confidence noise, and it instructs the model to return only valid JSON without any extraneous text.
+    payload = {
+        "contents": [
+            {
+                "parts": [{"text": user_prompt}]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 800
+        }
+    }
 
-    response = model.generate_content("Give me a one-sentence pitch for a sci-fi novel.")
-    print(response.text)
+    print("Payload sent to Gemini LLM:", payload)
 
-    matches, unmatched_first, unmatched_second = _match_elements(elements_1, elements_2)
-    issues = _find_pixel_issues(img1, img2, matches)
+    #call Gemmini LLM and get the response with retry logic for quota handling
+    raw_api_response = await call_gemini_with_retry(payload)
+
+    print("Raw response from Gemini LLM:", raw_api_response)
+        
+    # The text is hidden inside candidates -> content -> parts
+    ai_text_response = raw_api_response['candidates'][0]['content']['parts'][0]['text']
+    
+    # We strip in case there is leading/trailing whitespace or markdown
+    cleaned_json_str = ai_text_response.strip().replace("```json", "").replace("```", "")
+    
+    result_data = json.loads(cleaned_json_str)
 
     return {
-        "pair_id": payload.pair_id,
         "images": {
             "baseline": str(saved_paths[0]),
             "candidate": str(saved_paths[1]),
         },
         "elements": {
-            "baseline": [_element_to_json(item) for item in elements_1],
-            "candidate": [_element_to_json(item) for item in elements_2],
+            "baseline": [_element_to_json(item) for item in baseline_json],
+            "candidate": [_element_to_json(item) for item in comparison_json],
         },
         "matching": {
             "matched_count": len(matches),
             "unmatched_baseline": [_element_to_json(item) for item in unmatched_first],
             "unmatched_candidate": [_element_to_json(item) for item in unmatched_second],
         },
-        "issues": issues,
+        "issues": result_data.get("Issue", ""),
+        "suggested_fix": result_data.get("SuggestedFix", ""),
+        "affected_css_properties": result_data.get("AffectedCSSProperties", []),
         "summary": {
-            "total_detected_baseline": len(elements_1),
-            "total_detected_candidate": len(elements_2),
+            "total_detected_baseline": len(baseline_json),
+            "total_detected_candidate": len(comparison_json),
             "pixel_issues_found": len(issues),
             "highest_severity": _highest_severity(issues),
         },
     }
 
+async def call_gemini_with_retry(payload, retries=3, backoff_in_seconds=1):
+    print("Calling Gemini LLM with payload:")
+    async with httpx.AsyncClient() as client:
+        for i in range(retries):
+            response = await client.post(GEMINI_URL, json=payload)
+            
+            if response.status_code == 429:
+                # Get the retry delay from the error if possible, else use backoff
+                wait_time = backoff_in_seconds * (2 ** i) 
+                print(f"Quota hit. Retrying in {wait_time}s...")
+                await asyncio.sleep(wait_time)
+                continue
+                
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+                
+            return response.json()
+            
+        raise HTTPException(status_code=429, detail="Exceeded retries after hitting quota.")
+
 
 def _save_screenshots(user_id: int, pair_id: int, screenshots: list) -> list[Path]:
-    upload_dir = Path(f"upload_image/{user_id}/{pair_id}/rule_based")
+    upload_dir = Path(f"upload_image/{user_id}/{pair_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     saved_paths = []
@@ -1006,6 +1074,56 @@ def _read_image(path: Path) -> np.ndarray:
     if image is None:
         raise HTTPException(status_code=400, detail=f"Unable to read image from path: {path}")
     return image
+
+def get_ui_elements(img1_path, img2_path, model):
+    elements_img1 = detect_ui_elements_yolo(img1_path, model)
+    elements_img2 = detect_ui_elements_yolo(img2_path, model)
+
+    return {
+        "base_image_elements": elements_img1,
+        "comparison_image_elements": elements_img2
+    }
+
+def detect_ui_elements_yolo(image_path, model, conf_threshold=0.25,
+                       extract_text=True, visualize=False):
+    """
+    Run YOLOv8 detection on a screenshot.
+    Returns list of dicts with class, confidence, bbox, text.
+    """
+    results = model(image_path, conf=conf_threshold, imgsz=640, verbose=False)
+    detections = []
+
+    for r in results:
+        boxes = r.boxes
+        if boxes is None:
+            continue
+        for i in range(len(boxes)):
+            cls_id = int(boxes.cls[i])
+            conf   = float(boxes.conf[i])
+            x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy().astype(int)
+
+            text = ''
+            if extract_text:
+                try:
+                    img = cv2.imread(image_path)
+                    crop = img[max(0,y1):y2, max(0,x1):x2]
+                    if crop.size > 0:
+                        text = pytesseract.image_to_string(
+                            crop, config='--psm 6').strip()
+                except:
+                    text = ''
+
+            detections.append({
+                'class_name':      model.names[cls_id],
+                'confidence': round(conf, 4),
+                'bbox':       [int(x1), int(y1), int(x2), int(y2)],
+                'text':       text
+            })
+
+    # Sort by confidence
+    detections.sort(key=lambda d: d['confidence'], reverse=True)
+    return detections
+
 
 
 def _detect_ui_elements(image: np.ndarray) -> list[DetectedElement]:
@@ -1037,10 +1155,11 @@ def _detect_ui_elements(image: np.ndarray) -> list[DetectedElement]:
         confidence = _confidence_from_geometry(w, h, area, image_area)
         elements.append(
             DetectedElement(
-                element_id=f"el_{index}",
                 class_name=class_name,
                 bbox=[x, y, x + w, y + h],
                 confidence=round(confidence, 4),
+                text=""
+                
             )
         )
 
@@ -1102,10 +1221,11 @@ def _match_elements(first: list[DetectedElement], second: list[DetectedElement])
         best_score = 0.0
 
         for index, target in enumerate(second_pool):
-            if source.class_name != target.class_name:
+            source["class_name"]
+            if source["class_name"] != target["class_name"]:
                 continue
 
-            overlap = _iou(source.bbox, target.bbox)
+            overlap = _iou(source["bbox"], target["bbox"])
             if overlap > best_score:
                 best_score = overlap
                 best_index = index
@@ -1129,8 +1249,8 @@ def _find_pixel_issues(img1: np.ndarray, img2: np.ndarray, matches) -> list[dict
     issues = []
 
     for base_item, cand_item, overlap in matches:
-        crop1 = _crop(img1, base_item.bbox)
-        crop2 = _crop(img2, cand_item.bbox)
+        crop1 = _crop(img1, base_item["bbox"])
+        crop2 = _crop(img2, cand_item["bbox"])
         if crop1.size == 0 or crop2.size == 0:
             continue
 
@@ -1152,15 +1272,13 @@ def _find_pixel_issues(img1: np.ndarray, img2: np.ndarray, matches) -> list[dict
         if not has_issue:
             continue
 
-        severity = _severity(changed_ratio, mean_abs_diff, base_item.bbox, img1.shape)
+        severity = _severity(changed_ratio, mean_abs_diff, base_item["bbox"], img1.shape)
 
         issues.append(
             {
-                "element_id_baseline": base_item.element_id,
-                "element_id_candidate": cand_item.element_id,
-                "class": base_item.class_name,
-                "bbox_baseline": base_item.bbox,
-                "bbox_candidate": cand_item.bbox,
+                "class": base_item["class_name"],
+                "bbox_baseline": base_item["bbox"],
+                "bbox_candidate": cand_item["bbox"],
                 "iou": round(overlap, 4),
                 "pixel_metrics": {
                     "changed_pixel_ratio": round(changed_ratio, 4),
@@ -1168,7 +1286,7 @@ def _find_pixel_issues(img1: np.ndarray, img2: np.ndarray, matches) -> list[dict
                     "max_abs_diff": max_diff,
                 },
                 "severity": severity,
-                "issue_type": _issue_type(base_item.class_name, changed_ratio, mean_abs_diff),
+                "issue_type": _issue_type(base_item["class_name"], changed_ratio, mean_abs_diff),
             }
         )
 
@@ -1220,9 +1338,10 @@ def _highest_severity(issues: list[dict[str, Any]]) -> str | None:
 
 
 def _element_to_json(item: DetectedElement) -> dict[str, Any]:
+    
     return {
-        "id": item.element_id,
-        "class": item.class_name,
-        "confidence": item.confidence,
-        "bbox": item.bbox,
+        "class_name": item["class_name"],
+        "confidence": item["confidence"],
+        "bbox": item["bbox"],
+        "text": item["text"]
     }

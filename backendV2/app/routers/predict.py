@@ -175,7 +175,7 @@ async def get_predict_result(payload: PredictRequestByUrl):
 
 @router.post("/CompareRuleBased")
 async def compare_rule_based(payload: RuleBasedCompareRequest):
-    results = compare_screenshots_rule_based(payload)
+    results =  await compare_screenshots_rule_based(payload)
     return {
         "status": "success",
         "message": "Rule-based UI comparison finished.",

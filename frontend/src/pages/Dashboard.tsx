@@ -82,7 +82,7 @@ export default function Dashboard() {
       </div>
 
       {/* Mode Cards */}
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="">
         {/* Upload Mode */}
         <button
           onClick={() => handleStart("/new-test/upload")}
@@ -117,13 +117,13 @@ export default function Dashboard() {
         </button>
 
         {/* URL Mode */}
-        <button
+        {/* <button
           onClick={() => handleStart("/new-test/url")}
           className="group relative bg-white rounded-2xl p-8 border border-slate-200
                      hover:border-purple-500 hover:shadow-xl transition-all duration-300
                      text-left focus:outline-none"
         >
-          {/* Accent glow */}
+     
           <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition
                           bg-gradient-to-br from-purple-50 to-transparent pointer-events-none" />
 
@@ -147,7 +147,7 @@ export default function Dashboard() {
               Get started →
             </div>
           </div>
-        </button>
+        </button> */}
       </div>
     </div>
   );
