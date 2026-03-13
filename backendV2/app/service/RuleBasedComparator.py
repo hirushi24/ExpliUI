@@ -907,6 +907,24 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
     matches, unmatched_first, unmatched_second = _match_elements(baseline_json, comparison_json)
     issues = _find_pixel_issues(img1, img2, matches)
 
+    if not issues:
+        return {
+            "images": {
+                "baseline": str(saved_paths[0]),
+                "candidate": str(saved_paths[1]),
+            },
+            "issues": [],
+            "explanations": [],
+            "suggested_fix": "No significant UI issue detected from the provided JSON comparison.",
+            "affected_css_properties": [],
+            "summary": {
+                "total_detected_baseline": len(baseline_json),
+                "total_detected_candidate": len(comparison_json),
+                "pixel_issues_found": len(issues),
+                "highest_severity": _highest_severity(issues),
+            },
+        }
+
     # Now, extract just the 'source' elements from the matches
     matched_baseline_elements = [m[0] for m in matches]
 
@@ -930,54 +948,88 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
         - bbox: [x1, y1, x2, y2]
         - text: OCR-extracted visible text
 
-        Your goal is to identify meaningful UI differences between the two JSON inputs and explain them as a frontend technical issue.
+        Your goal is to identify meaningful UI differences between the two JSON inputs and explain them as frontend technical issues.
 
         Important rules:
         - Focus only on meaningful visual or structural UI changes such as:
-        - missing elements
-        - newly appeared elements
         - shifted alignment
         - changed position
         - changed size
         - text truncation
         - overlap
-        - wrong element type classification if strongly implied by context
         - spacing inconsistency
         - layout breakage
-        - Ignore very low-confidence noise or unclear OCR fragments unless they clearly contribute to a visible issue.
-        - Do not mention confidence scores in the final answer unless essential for reasoning.
+        - missing visible text
+        - broken text grouping
+        - responsive layout shift
+        - Ignore very low-confidence noise or unclear OCR fragments unless they clearly support a real UI issue.
         - Do not invent details that are not supported by the JSON comparison.
-        - Base the explanation only on the provided JSON data.
-        - Keep the explanation technical, concise, and actionable.
-        - Suggested fixes must be practical frontend/CSS-oriented recommendations.
-        - AffectedCSSProperties must contain only likely CSS properties related to the issue.
+        - Base the result only on the provided JSON data, text values, bbox values, browser, and OS metadata.
+        - Do not mention confidence scores unless absolutely necessary.
+        - Keep the output technical, concise, and actionable.
+        - SuggestedFix must be practical and CSS/frontend-oriented.
+        - AffectedCSSProperties must contain only likely CSS properties related to the detected issues.
         - Return exactly one JSON object.
         - Return only valid JSON.
         - Do not include markdown fences.
         - Do not include any extra explanation before or after the JSON.
 
+        Comparison instructions:
+        - Compare elements using class, text similarity, and approximate bbox location.
+        - Treat the same logical element as matched if text and position are reasonably similar.
+        - Use bbox differences to detect layout changes.
+        - Calculate and reason using approximate pixel differences such as:
+        - horizontal shift = difference in x position
+        - vertical shift = difference in y position
+        - width change = difference in (x2 - x1)
+        - height change = difference in (y2 - y1)
+        - If text appears cut, broken, split, clipped, or partially missing, treat it as likely overflow, wrapping, clipping, or insufficient container width.
+        - If multiple nearby text or link elements become fragmented, infer possible layout compression, wrapping failure, or overflow.
+        - If a matched element moves significantly, describe it as alignment shift, spacing issue, or responsive layout inconsistency.
+        - If an element exists in one JSON but not the other, describe it as missing or newly introduced only when strongly supported by the data.
+        - Consider browser and OS differences only as possible rendering context, not as proof of root cause.
+
         Output format:
         {{
-        "Issue": "<technical explanation of the detected UI issue>",
-        "SuggestedFix": "<technical suggestion to resolve the issue>",
-        "AffectedCSSProperties": ["property1", "property2"]
+        "Issue": [
+            "<issue 1, maximum 15 words>",
+            "<issue 2, maximum 15 words>"
+        ],
+        "Explanation": [
+            "<one sentence explaining issue 1 with evidence and approximate pixel differences>",
+            "<one sentence explaining issue 2 with evidence and approximate pixel differences>"
+        ],
+        "SuggestedFix": "<technical suggestion to resolve the detected UI issues>",
+        "AffectedCSSProperties": ["property1", "property2", "property3"]
         }}
 
-        Reasoning guidance:
-        - Compare elements by class, text similarity, and approximate bbox location.
-        - If text in one image appears truncated, broken, split, or partially missing in the other image, describe it as likely text overflow, wrapping, clipping, or container sizing issue.
-        - If the same logical element exists in both but its bbox significantly changes, describe it as alignment, spacing, or responsive layout shift.
-        - If an element appears only in one JSON, describe it as missing or newly introduced UI component.
-        - If multiple nearby text/link elements become fragmented, infer possible layout compression, wrapping, or overflow issues.
+        Strict output constraints:
+        - "Issue" must be a list of short detected UI issues.
+        - In "Issue", mention the baseline and comparison screenshot OS and browser to provide context.
+        - Each item in "Issue" must contain at most 15 words.
+        - "Explanation" must be a list with the same number of items as "Issue".
+        - Each explanation must mention the baseline and comparison screenshot OS and browser to provide context.
+        - Each explanation must explain the corresponding issue in exactly one sentence.
+        - Each explanation must include evidence from the JSON comparison, including relevant text, bbox behavior, or approximate pixel differences where possible.
+        - "SuggestedFix" must summarize the best technical frontend fix for the overall problem.
+        - "AffectedCSSProperties" must be a list of likely CSS properties only.
+        - If only one meaningful issue is found, return one item in "Issue" and one item in "Explanation".
+        - If no meaningful issue is found, return:
+            {{
+                "Issue": [],
+                "Explanation": [],
+                "SuggestedFix": "No significant UI issue detected from the provided JSON comparison.",
+                "AffectedCSSProperties": []
+            }}
 
         baseline_json: {matched_baseline_elements}
-		baseline_Screenshot_taken_OS: {payload.image_list[0].os}
-		baseline_Screenshot_taken_Browser: {payload.image_list[0].browser}
+        baseline_Screenshot_taken_OS: {payload.image_list[0].os}
+        baseline_Screenshot_taken_Browser: {payload.image_list[0].browser}
 
         comparison_json: {matched_candidate_elements}
-		comparison_Screenshot_taken_OS: {payload.image_list[1].os}
-		comparison_Screenshot_taken_Browser: {payload.image_list[1].browser}
-    """
+        comparison_Screenshot_taken_OS: {payload.image_list[1].os}
+        comparison_Screenshot_taken_Browser: {payload.image_list[1].browser}
+        """
     # The user prompt is designed to guide the Gemini LLM in analyzing the two sets of detected UI elements and generating a concise technical explanation of any meaningful differences, along with practical suggestions for fixes and relevant CSS properties. The prompt emphasizes the importance of focusing on significant visual or structural changes while ignoring low-confidence noise, and it instructs the model to return only valid JSON without any extraneous text.
     payload = {
         "contents": [
@@ -1011,16 +1063,8 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
             "baseline": str(saved_paths[0]),
             "candidate": str(saved_paths[1]),
         },
-        "elements": {
-            "baseline": [_element_to_json(item) for item in baseline_json],
-            "candidate": [_element_to_json(item) for item in comparison_json],
-        },
-        "matching": {
-            "matched_count": len(matches),
-            "unmatched_baseline": [_element_to_json(item) for item in unmatched_first],
-            "unmatched_candidate": [_element_to_json(item) for item in unmatched_second],
-        },
-        "issues": result_data.get("Issue", ""),
+        "issues": result_data.get("Issue", []),
+        "explanations": result_data.get("Explanation", []),
         "suggested_fix": result_data.get("SuggestedFix", ""),
         "affected_css_properties": result_data.get("AffectedCSSProperties", []),
         "summary": {
