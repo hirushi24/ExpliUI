@@ -625,6 +625,13 @@ const severityBadgeClasses: Record<string, string> = {
   low: "bg-green-100 text-green-800 border-green-200",
 };
 
+const severityRank: Record<string, number> = {
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
 const toIssueType = (value?: string) => {
   if (!value) return "visual";
   if (value.includes("layout")) return "layout";
@@ -1217,6 +1224,16 @@ const fetchResults = async () => {
   const pairNumber = Number(pairKey.replace("pair_", ""));
   const pairLabel = Number.isFinite(pairNumber) ? pairNumber + 1 : pairKey.replace("pair_", "");
   const isCollapsed = !!collapsedPairs[pairKey];
+   const pairSeverity = pairIssueList.reduce<string>((highest, issue) => {
+    if ((severityRank[issue.severity] || 0) > (severityRank[highest] || 0)) {
+      return issue.severity;
+    }
+    return highest;
+  }, "low");
+  const evidenceIssue = pairIssueList[0];
+  const pairCssProperties =
+    pairIssueList.find((issue) => Array.isArray(issue.css_properties) && issue.css_properties.length > 0)
+      ?.css_properties || [];
    const suggestedFixes = Array.from(
     new Set(
       pairIssueList
@@ -1259,6 +1276,57 @@ const fetchResults = async () => {
 
         <div className="p-4 space-y-6">
           <div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
+            <div className="gap-2"> 
+                <div className="flex flex-wrap items-center gap-2 mt-5">
+                <span className="text-sm font-medium text-slate-700">Severity Level : </span>
+                <span className={`px-2 py-0.5 rounded-full border text-[11px] font-semibold ${severityBadgeClasses[pairSeverity] || severityBadgeClasses.low}`}>
+                  {pairSeverity.toUpperCase()}
+                </span>
+                 {evidenceIssue && (
+                  <button
+                    type="button"
+                    onClick={() => handleViewEvidence(evidenceIssue)}
+                    className="ml-auto shrink-0 px-2 py-1 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1"
+                  >
+                    <Eye className="w-5 h-5" />
+                    View Evidence
+                  </button>
+                )}
+              </div>
+                <br></br>
+
+                <div className="flex flex-wrap">
+                  <span className="text-sm font-medium text-slate-700">Affected CSS Properties : </span>
+                  <span className="flex flex-wrap gap-2">
+                {pairCssProperties.length > 0 ? (
+                  pairCssProperties.map((property, propertyIndex) => (
+                    <code
+                      key={`${pairKey}-css-${propertyIndex}`}
+                      className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[12px]"
+                    >
+                      {property}
+                    </code>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-500">No affected CSS properties</span>
+                )}
+                </span>
+                </div>
+
+                {/* {evidenceIssue && (
+                  <button
+                    type="button"
+                    onClick={() => handleViewEvidence(evidenceIssue)}
+                    className="ml-auto shrink-0 px-2 py-1 rounded-md text-s font-medium bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1"
+                  >
+                    <Eye className="w-5 h-5" />
+                    View Evidence
+                  </button>
+                )} */}
+              </div>
+            </div>
+
             <h4 className="text-sm font-semibold text-slate-700 mb-2">Issues</h4>
             <ol className="space-y-2">
               {pairIssueList.map((issue, index) => (
@@ -1266,14 +1334,16 @@ const fetchResults = async () => {
                   key={`${issue.id}-description`}
                   className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-2">
+                  {/* <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-2"> */}
+                    <div className="flex items-start gap-3">
+                    <div>
                       <p className="text-slate-700 text-sm">
                         <span className="font-semibold">Issue {index + 1} - </span>
                         {issue.description}
                       </p>
 
-                      <div className="flex flex-wrap items-center gap-2">
+                      {/* <div className="flex flex-wrap items-center gap-2">
                         <span className={`px-2 py-0.5 rounded-full border text-[11px] font-semibold ${severityBadgeClasses[issue.severity] || severityBadgeClasses.low}`}>
                           {issue.severity.toUpperCase()}
                         </span>
@@ -1290,17 +1360,17 @@ const fetchResults = async () => {
                         ) : (
                           <span className="text-xs text-slate-500">No affected CSS properties</span>
                         )}
-                      </div>
+                      </div> */}
                     </div>
 
-                    <button
+                    {/* <button
                       type="button"
                       onClick={() => handleViewEvidence(issue)}
                       className="shrink-0 px-2 py-1 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1"
                     >
                       <Eye className="w-3 h-3" />
                       Evidence
-                    </button>
+                    </button> */}
                   </div>
                 </li>
               ))}
