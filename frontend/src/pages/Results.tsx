@@ -605,17 +605,25 @@ import { useState, useEffect, useMemo } from "react";
 // import { useParams, useNavigate } from "react-router-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { SummaryCard } from "../components/results/SummaryCard";
-import { IssueCard } from "../components/results/IssueCard";
+// import { IssueCard } from "../components/results/IssueCard";
 import { EvidenceModal } from "../components/results/EvidenceModal";
 import { ExportPanel } from "../components/results/ExportPanel";
 import { FilterPanel } from "../components/results/FilterPanel";
 import type { TestResults, DetectedIssue } from "../types/Results";
 import { mockResults } from "../mocks/ResultsData.ts";
 // import { Loader2 } from "lucide-react";
-import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+// import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, Loader2 } from "lucide-react";
 
 
 const RULE_BASED_SEVERITIES = ["critical", "high", "medium", "low"] as const;
+
+const severityBadgeClasses: Record<string, string> = {
+  critical: "bg-red-100 text-red-800 border-red-200",
+  high: "bg-orange-100 text-orange-800 border-orange-200",
+  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  low: "bg-green-100 text-green-800 border-green-200",
+};
 
 const toIssueType = (value?: string) => {
   if (!value) return "visual";
@@ -845,42 +853,62 @@ const fetchResults = async () => {
 
       if (hasRuleBasedOutput) {
         const issues = predictionList.flatMap((pair: any, pairIndex: number) => {
-          const toDetectedIssue = (issue: any, index: number): DetectedIssue => {
-            const bbox = issue?.bbox_baseline || [0, 0, 0, 0];
+          // const toDetectedIssue = (issue: any, index: number): DetectedIssue => {
+          //   const bbox = issue?.bbox_baseline || [0, 0, 0, 0];
+          const pairExplanations = Array.isArray(pair?.explanations) ? pair.explanations : [];
+
+          const toDetectedIssue = (issueEntry: any, index: number): DetectedIssue => {
+            const issueObject = issueEntry && typeof issueEntry === "object" ? issueEntry : {};
+            const bbox = issueObject?.bbox_baseline || [0, 0, 0, 0];
             const x1 = Number(bbox[0] || 0);
             const y1 = Number(bbox[1] || 0);
             const x2 = Number(bbox[2] || 0);
             const y2 = Number(bbox[3] || 0);
 
-            const severityCandidate = issue?.severity || pair?.summary?.highest_severity;
+            // const severityCandidate = issue?.severity || pair?.summary?.highest_severity;
+            const severityCandidate = issueObject?.severity || pair?.summary?.highest_severity;
             const severity = RULE_BASED_SEVERITIES.includes(severityCandidate)
               ? severityCandidate
               : "low";
 
-            const issueType = toIssueType(issue?.issue_type);
+            // const issueType = toIssueType(issue?.issue_type);
+            const issueType = toIssueType(issueObject?.issue_type);
+            const issueDescriptionFromList = typeof issueEntry === "string" ? issueEntry : "";
             const fallbackDescription =
-              typeof pair?.issues === "string"
-                ? pair.issues
-                : `${issue?.class || "element"} changed between screenshots`;
+              // typeof pair?.issues === "string"
+              //   ? pair.issues
+              //   : `${issue?.class || "element"} changed between screenshots`;
+              issueDescriptionFromList ||
+              (typeof pair?.issues === "string" ? pair.issues : `${issueObject?.class || "element"} changed between screenshots`);
+
+            const explanationFromPairList = typeof pairExplanations[index] === "string" ? pairExplanations[index] : "";
 
             return {
-              id: `${pair?.pair_id ?? pairIndex}_${issue?.element_id_baseline ?? index}`,
+              // id: `${pair?.pair_id ?? pairIndex}_${issue?.element_id_baseline ?? index}`,
+               id: `${pair?.pair_id ?? pairIndex}_${issueObject?.element_id_baseline ?? index}`,
               pair_id: pair?.pair_id ?? pairIndex,
               issue_type: issueType,
               severity,
-              category: issue?.issue_type || "visual_regression",
+              // category: issue?.issue_type || "visual_regression",
+              category: issueObject?.issue_type || "visual_regression",
               detected_between: {
                 environment_a: { browser: "Baseline", os: "Captured", device_type: "desktop" },
                 environment_b: { browser: "Candidate", os: "Captured", device_type: "desktop" },
               },
-              description: issue?.description || fallbackDescription,
+              // description: issue?.description || fallbackDescription,
+              description: issueObject?.description || fallbackDescription,
               explanation:
-                issue?.explanation ||
+                // issue?.explanation ||
+                issueObject?.explanation ||
+                explanationFromPairList ||
                 `Detected a visual difference between baseline and candidate screenshots for pair ${pair?.pair_id ?? pairIndex}.`,
-              root_cause: issue?.issue_type || "visual_regression",
-              css_properties: issue?.affected_css_properties || pair?.affected_css_properties || ["pixel-diff"],
+              // root_cause: issue?.issue_type || "visual_regression",
+              // css_properties: issue?.affected_css_properties || pair?.affected_css_properties || ["pixel-diff"],
+              root_cause: issueObject?.issue_type || "visual_regression",
+              css_properties: issueObject?.affected_css_properties || pair?.affected_css_properties || ["pixel-diff"],
               suggested_fix:
-                issue?.suggested_fix ||
+                // issue?.suggested_fix ||
+                issueObject?.suggested_fix ||
                 pair?.suggested_fix ||
                 "Inspect the matched element in both screenshots and align layout/content/styles for parity.",
               evidence: {
@@ -893,7 +921,8 @@ const fetchResults = async () => {
                   height: Math.max(0, y2 - y1),
                 },
               },
-              visual_impact: issue?.class || "ui_element",
+              // visual_impact: issue?.class || "ui_element",
+              visual_impact: issueObject?.class || "ui_element",
               occurrence_frequency: "common",
             };
           };
@@ -901,11 +930,18 @@ const fetchResults = async () => {
           const rawIssues = pair?.issues;
 
           if (Array.isArray(rawIssues)) {
-            return rawIssues.map((issue: any, index: number) => toDetectedIssue(issue, index));
+            // return rawIssues.map((issue: any, index: number) => toDetectedIssue(issue, index));
+            return rawIssues
+              .filter((issue: any) => {
+                if (typeof issue === "string") return issue.trim().length > 0;
+                return Boolean(issue);
+              })
+              .map((issue: any, index: number) => toDetectedIssue(issue, index));
           }
 
           if (typeof rawIssues === "string" && rawIssues.trim()) {
-            return [toDetectedIssue({ description: rawIssues }, 0)];
+            // return [toDetectedIssue({ description: rawIssues }, 0)];
+            return [toDetectedIssue(rawIssues, 0)];
           }
 
           if (rawIssues && typeof rawIssues === "object") {
@@ -1177,8 +1213,17 @@ const fetchResults = async () => {
     </div>
   ) : (
     Object.entries(groupedIssues).map(([pairKey, pairIssueList]) => {
-  const pairLabel = pairKey.replace("pair_", "");
+  // const pairLabel = pairKey.replace("pair_", "");
+  const pairNumber = Number(pairKey.replace("pair_", ""));
+  const pairLabel = Number.isFinite(pairNumber) ? pairNumber + 1 : pairKey.replace("pair_", "");
   const isCollapsed = !!collapsedPairs[pairKey];
+   const suggestedFixes = Array.from(
+    new Set(
+      pairIssueList
+        .map((issue) => issue.suggested_fix?.trim())
+        .filter((fix): fix is string => Boolean(fix))
+    )
+  );
 
   return (
     <section key={pairKey} className="bg-white border rounded-xl">
@@ -1202,15 +1247,95 @@ const fetchResults = async () => {
       </button>
 
       {!isCollapsed && (
-        <div className="p-4 space-y-4">
-          {pairIssueList.map((issue, index) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              index={index}
-              onViewEvidence={handleViewEvidence}
-            />
-          ))}
+        // <div className="p-4 space-y-4">
+        //   {pairIssueList.map((issue, index) => (
+        //     <IssueCard
+        //       key={issue.id}
+        //       issue={issue}
+        //       index={index}
+        //       onViewEvidence={handleViewEvidence}
+        //     />
+        //   ))}
+
+        <div className="p-4 space-y-6">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 mb-2">Issues</h4>
+            <ol className="space-y-2">
+              {pairIssueList.map((issue, index) => (
+                <li
+                  key={`${issue.id}-description`}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-2">
+                      <p className="text-slate-700 text-sm">
+                        <span className="font-semibold">Issue {index + 1} - </span>
+                        {issue.description}
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-full border text-[11px] font-semibold ${severityBadgeClasses[issue.severity] || severityBadgeClasses.low}`}>
+                          {issue.severity.toUpperCase()}
+                        </span>
+
+                        {issue.css_properties?.length > 0 ? (
+                          issue.css_properties.map((property, propertyIndex) => (
+                            <code
+                              key={`${issue.id}-css-${propertyIndex}`}
+                              className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[11px]"
+                            >
+                              {property}
+                            </code>
+                          ))
+                        ) : (
+                          <span className="text-xs text-slate-500">No affected CSS properties</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleViewEvidence(issue)}
+                      className="shrink-0 px-2 py-1 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      Evidence
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 mb-2">Issue Explanations</h4>
+            <ol className="space-y-2">
+              {pairIssueList.map((issue, index) => (
+                <li
+                  key={`${issue.id}-explanation`}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 text-sm"
+                >
+                  <span className="font-semibold">Explanation for Issue {index + 1} - </span>
+                  {issue.explanation}
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 mb-2">Suggested Fixes</h4>
+            <ol className="space-y-2">
+              {suggestedFixes.map((fix, index) => (
+                <li
+                  key={`${pairKey}-suggested-fix-${index}`}
+                  className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-900 text-sm"
+                >
+                  <span className="font-semibold">Suggestion {index + 1} - </span>
+                  {fix}
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       )}
     </section>
