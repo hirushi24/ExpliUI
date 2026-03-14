@@ -1843,11 +1843,11 @@ export function PairUploadPanel({
   const editDisabled = !confirmed;
 
   return (
-    <div className="flex-1 p-8 bg-slate-50 h-[calc(100vh-64px)] overflow-y-auto">
+    <div className="flex-1 p-8 bg-slate-200 h-[calc(100vh-64px)] overflow-y-auto">
       <Toast open={toastOpen} message={toastMsg} onClose={() => setToastOpen(false)} />
 
       <div className="max-w-5xl mx-auto">
-        <div className="bg-white border rounded-xl p-6 mb-6">
+        <div className="bg-white border border rounded-xl p-6 mb-6">
           <h3 className="font-semibold text-slate-800 mb-1">Comparison Mode</h3>
           <p className="text-sm text-slate-500 mb-6">Choose how screenshots will be compared.</p>
 
@@ -1860,8 +1860,8 @@ export function PairUploadPanel({
                 "relative group w-full text-left p-5 rounded-xl border transition-all",
                 confirmed ? "opacity-60 cursor-not-allowed" : "hover:shadow-md",
                 pair.comparisonMode === "desktop-desktop"
-                  ? "border-blue-500 bg-gradient-to-br from-blue-50 to-white ring-2 ring-blue-200"
-                  : "border-slate-200 bg-white hover:bg-slate-50",
+                  ? "border bg-gradient-to-br from-blue-50 to-white ring-2 ring-blue-200"
+                  : "border bg-blue-50 hover:bg-slate-50",
               ].join(" ")}
             >
               <div className="flex items-start gap-4">
@@ -1870,7 +1870,7 @@ export function PairUploadPanel({
                     "w-12 h-12 rounded-lg flex items-center justify-center",
                     pair.comparisonMode === "desktop-desktop"
                       ? "bg-blue-100 text-blue-600"
-                      : "bg-slate-100 text-slate-500",
+                      : "bg-blue-100 text-slate-500",
                   ].join(" ")}
                 >
                   <Monitor className="w-6 h-6" />
@@ -1897,8 +1897,8 @@ export function PairUploadPanel({
                 "relative group w-full text-left p-5 rounded-xl border transition-all",
                 confirmed ? "opacity-60 cursor-not-allowed" : "hover:shadow-md",
                 pair.comparisonMode === "mobile-mobile"
-                  ? "border-blue-500 bg-gradient-to-br from-blue-50 to-white ring-2 ring-blue-200"
-                  : "border-slate-200 bg-white hover:bg-slate-50",
+                  ? "border bg-gradient-to-br from-blue-50 to-white ring-2 ring-blue-200"
+                  : "border bg-blue-50 hover:bg-slate-50",
               ].join(" ")}
             >
               <div className="flex items-start gap-4">
@@ -1907,7 +1907,7 @@ export function PairUploadPanel({
                     "w-12 h-12 rounded-lg flex items-center justify-center",
                     pair.comparisonMode === "mobile-mobile"
                       ? "bg-blue-100 text-blue-600"
-                      : "bg-slate-100 text-slate-500",
+                      : "bg-blue-100 text-slate-500",
                   ].join(" ")}
                 >
                   <Smartphone className="w-6 h-6" />
@@ -1928,14 +1928,14 @@ export function PairUploadPanel({
           </div>
 
           {!pair.comparisonMode && (
-            <div className="mt-4 flex items-center gap-2 text-amber-700 font-medium text-sm">
+            <div className="mt-4 flex items-center gap-2 text-blue-700 font-medium text-sm">
               <Lock className="w-4 h-4" />
               Select a comparison mode to unlock uploads.
             </div>
           )}
         </div>
 
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white border border rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-slate-800">Upload Screenshots & Metadata</h2>
@@ -2009,7 +2009,7 @@ export function PairUploadPanel({
           </div>
 
           {!metaReady && pair.comparisonMode && !confirmed && (
-            <div className="mt-4 text-sm text-amber-700">
+            <div className="mt-4 text-sm text-blue-700">
               Upload both screenshots and complete all required fields to enable <b>Confirm</b>.
             </div>
           )}
@@ -2236,7 +2236,8 @@ function CropModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl rounded-xl bg-white shadow-xl overflow-hidden">
+      {/* <div className="w-full max-w-5xl rounded-xl bg-white shadow-xl overflow-hidden"> */}
+      <div className="w-full max-w-5xl max-h-[92vh] rounded-xl bg-white shadow-xl overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <h3 className="font-semibold text-slate-800">Crop Screenshot</h3>
           <button type="button" onClick={onCancel} className="text-slate-500 hover:text-slate-700">
@@ -2244,12 +2245,17 @@ function CropModal({
           </button>
         </div>
 
-        <div className="p-6">
+        {/* <div className="p-6"> */}
+         <div className="p-6 overflow-y-auto">
           <p className="text-sm text-slate-600 mb-4">
             Drag the crop box or drag its top, bottom, left, and right edges to adjust.
           </p>
 
-          <div ref={frameRef} className="relative rounded-lg border bg-slate-50 overflow-hidden min-h-[420px]">
+          {/* <div ref={frameRef} className="relative rounded-lg border bg-slate-50 overflow-hidden min-h-[420px]"> */}
+          <div
+            ref={frameRef}
+            className="relative rounded-lg border bg-slate-300 overflow-hidden h-[60vh] min-h-[240px] max-h-[60vh]"
+          >
             <img src={imageUrl} alt="Crop preview" className="w-full h-full object-contain select-none" draggable={false} />
 
             <div

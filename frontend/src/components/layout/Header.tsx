@@ -41,7 +41,7 @@ export function Header() {
     ].join(" ");
 
   return (
-    <header className="bg-white border-b h-16 flex items-center px-8 justify-between sticky top-0 z-50">
+    <header className="bg-slate-900 h-16 flex items-center px-8 justify-between sticky top-0 z-50">
       <Link to="/" className="flex items-center gap-2 text-primary font-bold text-xl">
         <LayoutGrid className="w-6 h-6" />
         ExpliUI
