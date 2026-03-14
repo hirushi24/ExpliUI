@@ -117,7 +117,7 @@ export default function Dashboard() {
         </button>
 
         {/* URL Mode */}
-        {/* <button
+        <button
           onClick={() => handleStart("/new-test/url")}
           className="group relative bg-white rounded-2xl p-8 border border-slate-200
                      hover:border-purple-500 hover:shadow-xl transition-all duration-300
@@ -147,7 +147,7 @@ export default function Dashboard() {
               Get started →
             </div>
           </div>
-        </button> */}
+        </button>
       </div>
     </div>
   );

@@ -274,10 +274,16 @@ const handleStartAnalysis = async () => {
         {
           image_name: imgA?.image_name || "url_capture_A.png",
           image_base64: base64A,
+          device_type: (envA?.deviceType || "desktop").toLowerCase(),
+          browser: (envA?.browser || "chrome").toLowerCase(),
+          os: (envA?.os || "windows").toLowerCase(),
         },
         {
           image_name: imgB?.image_name || "url_capture_B.png",
           image_base64: base64B,
+          device_type: (envB?.deviceType || "desktop").toLowerCase(),
+          browser: (envB?.browser || "chrome").toLowerCase(),
+          os: (envB?.os || "windows").toLowerCase(),
         },
       ],
     };
