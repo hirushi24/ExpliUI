@@ -1134,7 +1134,7 @@ const fetchResults = async () => {
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Failed to Load Results</h2>
           <p className="text-slate-600 mb-6">{error || "Results not found"}</p>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Back to Dashboard
@@ -1155,7 +1155,7 @@ const fetchResults = async () => {
           </div>
           
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
           >
             ← Back to Dashboard

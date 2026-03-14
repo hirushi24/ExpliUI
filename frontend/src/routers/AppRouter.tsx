@@ -31,6 +31,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Header } from "../components/layout/Header";
 
+import WelcomePage from "../pages/WelcomePage";
 import Dashboard from "../pages/Dashboard";
 import UploadTest from "../pages/UploadTest";
 import UrlTest from "../pages/UrlEnterPage";
@@ -46,8 +47,11 @@ export default function AppRouter() {
       <Header />
       <main>
         <Routes>
+          
+          {/* <Route path="/" element={<Dashboard />} /> */}
+          <Route path="/" element={<WelcomePage />} />
 
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
 
           <Route path="/new-test/upload" element={<UploadTest />} />
 

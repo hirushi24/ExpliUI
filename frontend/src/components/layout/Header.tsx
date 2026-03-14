@@ -23,7 +23,8 @@
 //   ); 
 // }
 
-import { LayoutGrid, History, Settings } from "lucide-react";
+// import { LayoutGrid, History, Settings } from "lucide-react";
+import { LayoutGrid, History } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 export function Header() {

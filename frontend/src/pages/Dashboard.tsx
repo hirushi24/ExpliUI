@@ -50,9 +50,10 @@
 // }
 
 
-import { Upload, Globe } from "lucide-react";
+// import { Upload, Globe } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useSession } from "../context/SessionContext";
+// import { useSession } from "../context/SessionContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();

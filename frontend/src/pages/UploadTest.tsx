@@ -802,7 +802,7 @@ export default function UploadTest() {
         />
 
         <div className="p-4 border-t bg-white flex justify-end gap-4">
-          <Button variant="secondary" onClick={() => navigate("/")}>
+          <Button variant="secondary" onClick={() => navigate("/dashboard")}>
             Cancel
           </Button>
 
