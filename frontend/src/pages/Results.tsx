@@ -742,14 +742,28 @@ export default function Results() {
 const normalizePairId = (raw: any) => {
   if (raw === null || raw === undefined) return "unknown";
   if (typeof raw === "number") return String(raw);
-  if (typeof raw === "string") return raw;
+  // if (typeof raw === "string") return raw;
+  if (typeof raw === "string") {
+    const numericMatch = raw.match(/\d+/);
+    return numericMatch ? numericMatch[0] : raw;
+  }
   // try common fields on objects
   if (typeof raw === "object") {
-    return (
-      String(raw.pair_id ?? raw.pairId ?? raw.id ?? raw.pair ?? "unknown")
-    );
+    // return (
+    //   String(raw.pair_id ?? raw.pairId ?? raw.id ?? raw.pair ?? "unknown")
+    // );
+    const objectId = raw.pair_id ?? raw.pairId ?? raw.id ?? raw.pair;
+    if (objectId !== null && objectId !== undefined) {
+      return normalizePairId(objectId);
+    }
+    return "unknown";
   }
   return String(raw);
+};
+
+const normalizePairIdWithIndexFallback = (raw: any, index: number, source: string) => {
+  const normalized = normalizePairId(raw);
+  return normalized === "unknown" ? `${source}_${index}` : normalized;
 };
 
 /**
@@ -770,7 +784,8 @@ const canonicalAllPairs = useMemo(() => {
       const p = predictionList[i];
       // many shapes: pair_id, pairId, id
       const candidate = p?.pair_id ?? p?.pairId ?? p?.id ?? p;
-      set.add(normalizePairId(candidate ?? i));
+      // set.add(normalizePairId(candidate ?? i));
+      set.add(normalizePairIdWithIndexFallback(candidate, i, "prediction"));
     }
     return set;
   }
@@ -780,7 +795,8 @@ const canonicalAllPairs = useMemo(() => {
     for (let i = 0; i < pairsFromState.length; i++) {
       const p = pairsFromState[i];
       const candidate = p?.pair_id ?? p?.pairId ?? p?.id ?? p;
-      set.add(normalizePairId(candidate ?? i));
+      // set.add(normalizePairId(candidate ?? i));
+      set.add(normalizePairIdWithIndexFallback(candidate, i, "state"));
     }
     return set;
   }
@@ -1157,7 +1173,8 @@ const fetchResults = async () => {
   summary={results.summary}
   metadata={results.test_metadata}
   pairsWithIssuesCount={pairsWithIssuesCount}
-  pairsWithoutIssuesCount={pairsWithoutIssuesCount}
+  // pairsWithoutIssuesCount={pairsWithoutIssuesCount}
+  pairsWithoutIssuesCount={finalPairsWithoutIssuesCount}
 />
 
         {/* Export Panel */}
