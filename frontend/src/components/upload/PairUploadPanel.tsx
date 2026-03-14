@@ -1848,7 +1848,7 @@ export function PairUploadPanel({
 
       <div className="max-w-5xl mx-auto">
         <div className="bg-white border border rounded-xl p-6 mb-6">
-          <h3 className="font-semibold text-slate-800 mb-1">Comparison Mode</h3>
+          <h3 className="font-bold text-xl text-slate-800 mb-1">Comparison Mode</h3>
           <p className="text-sm text-slate-500 mb-6">Choose how screenshots will be compared.</p>
 
           <div className="grid md:grid-cols-2 gap-5">

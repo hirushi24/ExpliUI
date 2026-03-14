@@ -351,28 +351,28 @@ export function ExportPanel({ sessionId, results }: Props) {
         <button
           onClick={handleExportPDF}
           disabled={exporting === "pdf"}
-          className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <FileText className="h-4 w-4 text-red-600" />
+          <FileText className="h-4 w-4 text-blue-600" />
           {exporting === "pdf" ? "Generating..." : "Download PDF"}
         </button>
 
         <button
           onClick={handleExportJSON}
-          className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="flex items-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition hover:bg-slate-50"
         >
           <FileJson className="h-4 w-4 text-blue-600" />
           Export JSON
         </button>
 
-        <button
+        {/* <button
           onClick={handleSaveSession}
           disabled={exporting === "save"}
           className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           {exporting === "save" ? "Saving..." : "Save Session"}
-        </button>
+        </button> */}
       </div>
     </div>
   );

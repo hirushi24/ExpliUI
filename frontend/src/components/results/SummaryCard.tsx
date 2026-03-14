@@ -514,7 +514,7 @@ export function SummaryCard({
   return (
     <div className="rounded-2xl overflow-hidden border shadow-sm mb-6 bg-white">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-5">
+      <div className="bg-blue-950 text-white px-6 py-5">
         <div className="flex items-start justify-between gap-6 flex-wrap">
           <div>
             <h2 className="text-2xl font-bold">Test Completed</h2>
@@ -526,7 +526,7 @@ export function SummaryCard({
             )}
 
             <p className="text-sm text-blue-100 mt-1">
-              Completed {formatDate(metadata.completed_at)} • {formatDuration(metadata.processing_time_seconds)}
+              Completed {formatDate(metadata.completed_at)} 
             </p>
           </div>
 

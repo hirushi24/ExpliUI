@@ -252,7 +252,7 @@ export default function ConfigureTest() {
   const confirmedCount = pairs.filter((p: any) => p.stage === "confirmed").length;
 
   return (
-    <div className="bg-slate-50 min-h-[calc(100vh-64px)]">
+    <div className="bg-slate-200 min-h-[calc(100vh-64px)]">
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -260,7 +260,7 @@ export default function ConfigureTest() {
             <div>
               <h1 className="text-3xl font-bold text-slate-800">Configure Comparison</h1>
               <p className="text-slate-500 mt-1">
-                Review your test setup before running analysis.
+                Review your uploaded pairs and confirm you're ready to run analysis.
               </p>
             </div>
 
@@ -281,7 +281,7 @@ export default function ConfigureTest() {
 
         {/* Summary Card */}
         <div className="rounded-2xl border shadow-sm overflow-hidden mb-8 bg-white">
-          <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+          <div className="px-6 py-5 bg-blue-950 text-white">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="text-xl font-bold">Session Summary</h2>
@@ -333,9 +333,9 @@ export default function ConfigureTest() {
 
         {/* Pairs Preview */}
         <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mb-24">
-          <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Pairs Preview</h3>
-            <span className="text-xs text-slate-500">
+          <div className="px-6 py-4 border-b px-6 py-5 bg-blue-950 text-white flex items-center justify-between">
+            <h3 className="font-semibold text-white">Pairs Preview</h3>
+            <span className="text-xs text-white">
               Showing up to {Math.min(5, pairs.length)} pairs
             </span>
           </div>
@@ -396,9 +396,9 @@ export default function ConfigureTest() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="secondary" onClick={() => navigate(-1)}>
+              {/* <Button variant="secondary" onClick={() => navigate(-1)}>
                 Back
-              </Button>
+              </Button> */}
 
               <Button
                 disabled={pairs.length === 0}

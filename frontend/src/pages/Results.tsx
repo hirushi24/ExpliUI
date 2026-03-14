@@ -613,7 +613,7 @@ import type { TestResults, DetectedIssue } from "../types/Results";
 import { mockResults } from "../mocks/ResultsData.ts";
 // import { Loader2 } from "lucide-react";
 // import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import { ChevronDown, ChevronRight, Eye, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, Loader2, ArrowLeft } from "lucide-react";
 
 
 const RULE_BASED_SEVERITIES = ["critical", "high", "medium", "low"] as const;
@@ -1145,25 +1145,28 @@ const fetchResults = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-200">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Test Results</h1>
-            <p className="text-sm text-slate-500">Session ID: {sessionId}</p>
-          </div>
-          
-          <button
+      <header className="bg-white border-b sticky top-0 z-10 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+        <button
             onClick={() => navigate("/dashboard")}
-            className="px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-black-600 rounded-lg flex flex-wrap items-center gap-3"
           >
-            ← Back to Dashboard
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
           </button>
-        </div>
+          </div>
+        
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Test Results</h1>
+            {/* <p className="text-sm text-slate-500">Session ID: {sessionId}</p> */}
+          </div>
+        </div>
         {/* Summary Card */}
         {/* <SummaryCard summary={results.summary} metadata={results.test_metadata} /> */}
                 {/* Summary Card */}
@@ -1264,20 +1267,28 @@ const fetchResults = async () => {
       <button
         type="button"
         onClick={() => togglePair(pairKey)}
-        className="w-full px-4 py-3 flex items-center justify-between border-b"
+        className="w-full px-8 py-4 flex items-center justify-between border-b"
       >
-        <div className="flex items-center gap-2">
-          {isCollapsed ? (
+        <div className="">
+          {/* {isCollapsed ? (
             <ChevronRight className="w-4 h-4 text-slate-600" />
           ) : (
             <ChevronDown className="w-4 h-4 text-slate-600" />
-          )}
-          <h3 className="text-lg font-bold text-slate-800">Pair {pairLabel}</h3>
-        </div>
-
-        <span className="text-sm text-slate-500">
+          )} */}
+          <h3 className="flex text-lg font-bold text-slate-800">Pair {pairLabel}</h3>
+          <span className="flex text-sm text-slate-500">
           {pairIssueList.length} issue{pairIssueList.length > 1 ? "s" : ""}
         </span>
+        </div>
+        {isCollapsed ? (
+            <ChevronRight className="w-6 h-6 text-slate-700" />
+          ) : (
+            <ChevronDown className="w-6 h-6 text-slate-700" />
+          )}
+
+        {/* <span className="text-sm text-slate-500">
+          {pairIssueList.length} issue{pairIssueList.length > 1 ? "s" : ""}
+        </span> */}
       </button>
 
       {!isCollapsed && (
@@ -1304,7 +1315,7 @@ const fetchResults = async () => {
                   <button
                     type="button"
                     onClick={() => handleViewEvidence(evidenceIssue)}
-                    className="ml-auto shrink-0 px-2 py-1 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1"
+                    className="ml-auto shrink-0 px-2 py-1 rounded-md text-s font-medium bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-1"
                   >
                     <Eye className="w-5 h-5" />
                     View Evidence
@@ -1313,9 +1324,9 @@ const fetchResults = async () => {
               </div>
                 <br></br>
 
-                <div className="flex flex-wrap">
-                  <span className="text-sm font-medium text-slate-700">Affected CSS Properties : </span>
-                  <span className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap px-3 py-4 bg-blue-50 border rounded-md border-blue-200 gap-2">
+                  <div className="text-sm font-medium text-slate-700">Affected CSS Properties : </div>
+                  <div className="flex flex-wrap gap-2">
                 {pairCssProperties.length > 0 ? (
                   pairCssProperties.map((property, propertyIndex) => (
                     <code
@@ -1328,7 +1339,7 @@ const fetchResults = async () => {
                 ) : (
                   <span className="text-xs text-slate-500">No affected CSS properties</span>
                 )}
-                </span>
+                </div>
                 </div>
 
                 {/* {evidenceIssue && (
@@ -1344,12 +1355,13 @@ const fetchResults = async () => {
               </div>
             </div>
 
-            <h4 className="text-sm font-semibold text-slate-700 mb-2">Issues</h4>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
+            <h4 className="text-md font-semibold text-slate-700 mb-2">Issues</h4>
             <ol className="space-y-2">
               {pairIssueList.map((issue, index) => (
                 <li
                   key={`${issue.id}-description`}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2"
                 >
                   {/* <div className="flex items-start justify-between gap-3">
                     <div className="space-y-2"> */}
@@ -1392,15 +1404,16 @@ const fetchResults = async () => {
                 </li>
               ))}
             </ol>
+            </div>
           </div>
 
-          <div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
             <h4 className="text-sm font-semibold text-slate-700 mb-2">Issue Explanations</h4>
             <ol className="space-y-2">
               {pairIssueList.map((issue, index) => (
                 <li
                   key={`${issue.id}-explanation`}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700 text-sm"
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-700 text-sm"
                 >
                   <span className="font-semibold">Explanation for Issue {index + 1} - </span>
                   {issue.explanation}
@@ -1409,7 +1422,7 @@ const fetchResults = async () => {
             </ol>
           </div>
 
-          <div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
             <h4 className="text-sm font-semibold text-slate-700 mb-2">Suggested Fixes</h4>
             <ol className="space-y-2">
               {suggestedFixes.map((fix, index) => (
