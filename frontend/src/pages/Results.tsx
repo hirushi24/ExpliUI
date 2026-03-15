@@ -640,6 +640,12 @@ const toIssueType = (value?: string) => {
   return "visual";
 };
 
+interface PairPreview {
+  pairId: string;
+  imageA: string;
+  imageB: string;
+}
+
 const BACKEND_STATIC_ORIGIN = import.meta.env.VITE_UPLOAD_SERVER_ORIGIN || "";
 
 const toAbsoluteMediaUrl = (rawUrl?: string) => {
@@ -895,6 +901,56 @@ const finalPairsWithoutIssuesCount = useMemo(() => {
   // fallback to 0
   return 0;
 }, [allPairsCount, pairsWithoutIssuesCount, results?.summary?.no_issues]);
+
+const pairPreviewsById = useMemo(() => {
+  const map = new Map<string, PairPreview>();
+
+  const addPairPreview = (pairSource: any, index: number, source: string) => {
+    const candidateId = pairSource?.pair_id ?? pairSource?.pairId ?? pairSource?.id ?? pairSource;
+    const pairId = normalizePairIdWithIndexFallback(candidateId, index, source);
+
+    const imageA =
+      toAbsoluteMediaUrl(pairSource?.images?.baseline) ||
+      toAbsoluteMediaUrl(pairSource?.image_a) ||
+      toAbsoluteMediaUrl(pairSource?.imageA) ||
+      toAbsoluteMediaUrl(pairSource?.baseline) ||
+      undefined;
+
+    const imageB =
+      toAbsoluteMediaUrl(pairSource?.images?.candidate) ||
+      toAbsoluteMediaUrl(pairSource?.image_b) ||
+      toAbsoluteMediaUrl(pairSource?.imageB) ||
+      toAbsoluteMediaUrl(pairSource?.candidate) ||
+      undefined;
+
+    if (!imageA || !imageB || map.has(pairId)) return;
+
+    map.set(pairId, { pairId, imageA, imageB });
+  };
+
+  if (Array.isArray(predictionList) && predictionList.length > 0) {
+    predictionList.forEach((pair: any, index: number) => addPairPreview(pair, index, "prediction"));
+  }
+
+  if (Array.isArray(pairsFromState) && pairsFromState.length > 0) {
+    pairsFromState.forEach((pair: any, index: number) => addPairPreview(pair, index, "state"));
+  }
+
+  return map;
+}, [predictionList, pairsFromState]);
+
+const pairsWithIssuesPreviews = useMemo(
+  () => Array.from(pairsWithIssuesSet).map((pairId) => pairPreviewsById.get(pairId)).filter(Boolean) as PairPreview[],
+  [pairsWithIssuesSet, pairPreviewsById]
+);
+
+const pairsWithoutIssuesPreviews = useMemo(
+  () => Array.from(canonicalAllPairs)
+    .filter((pairId) => !pairsWithIssuesSet.has(pairId))
+    .map((pairId) => pairPreviewsById.get(pairId))
+    .filter(Boolean) as PairPreview[],
+  [canonicalAllPairs, pairsWithIssuesSet, pairPreviewsById]
+);
 
 // Debug (temporary — remove when confirmed)
 console.debug("pair-counts-debug:", {
@@ -1225,6 +1281,8 @@ const fetchResults = async () => {
   pairsWithIssuesCount={pairsWithIssuesCount}
   // pairsWithoutIssuesCount={pairsWithoutIssuesCount}
   pairsWithoutIssuesCount={finalPairsWithoutIssuesCount}
+  pairsWithIssues={pairsWithIssuesPreviews}
+  pairsWithoutIssues={pairsWithoutIssuesPreviews}
 />
 
         {/* Export Panel */}

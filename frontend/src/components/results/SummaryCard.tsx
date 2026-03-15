@@ -479,14 +479,24 @@
 
 
 // src/components/results/SummaryCard.tsx
-import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+// import { CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle } from "lucide-react";
 import type { TestResults } from "../../types/Results";
+
+interface PairPreview {
+  pairId: string;
+  imageA: string;
+  imageB: string;
+}
 
 interface Props {
   summary: TestResults["summary"];
   metadata: TestResults["test_metadata"];
   pairsWithIssuesCount?: number;
-   pairsWithoutIssuesCount?: number; 
+  //  pairsWithoutIssuesCount?: number; 
+  pairsWithoutIssuesCount?: number;
+  pairsWithIssues?: PairPreview[];
+  pairsWithoutIssues?: PairPreview[];
 }
 
 export function SummaryCard({
@@ -494,13 +504,15 @@ export function SummaryCard({
   metadata,
   pairsWithIssuesCount = 0,
   pairsWithoutIssuesCount = 0,
+  pairsWithIssues = [],
+  pairsWithoutIssues = [],
 }: Props) {
-  const formatDuration = (seconds: number) => {
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}m ${secs}s`;
-  };
+  // const formatDuration = (seconds: number) => {
+  //   if (seconds < 60) return `${seconds}s`;
+  //   const minutes = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   return `${minutes}m ${secs}s`;
+  // };
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleString("en-US", {
@@ -553,13 +565,16 @@ export function SummaryCard({
             </div>
             <p className="text-xs text-slate-500 mt-1">UI differences detected across environments</p>
 
-            <br></br>
+            <br />
             <div className="mt-3 text-xl font-bold text-slate-800">
-              Pairs With Issues: {" "} 
+             Pairs With Issues:{" "}
               <span className="font-bold text-slate-800">{pairsWithIssuesCount}</span>
             </div>
 
             <div className="text-md text-slate-800 mt-3">Issues Count: {summary.issues_detected}</div>
+            {pairsWithIssues.length > 0 && (
+              <PairPreviewSection title="Affected Image Pairs" pairs={pairsWithIssues} />
+            )}
           </div>
 
           <div className="rounded-xl border bg-slate-50 p-5">
@@ -574,12 +589,16 @@ export function SummaryCard({
             </div>
              <p className="text-xs text-slate-500 mt-1">Screenshots matched consistently</p>
 
-            <br></br>
-             <div className="mt-3 text-xl font-bold text-slate-800">
+            <br />
+            <div className="mt-3 text-xl font-bold text-slate-800">
               Pairs Without Issues:{" "}
               <span className="font-bold text-slate-800">{pairsWithoutIssuesCount}</span>
             </div>
             {/* <div className="text-md text-slate-800 mt-3">{summary.no_issues}</div> */}
+            
+            {pairsWithoutIssues.length > 0 && (
+              <PairPreviewSection title="Passing Image Pairs" pairs={pairsWithoutIssues} />
+            )}
 
            
           </div>
@@ -630,6 +649,25 @@ export function SummaryCard({
             <p className="text-xs text-slate-500 mt-1">Minor UI differences</p>
           </div>
         </div> */}
+      </div>
+    </div>
+  );
+}
+
+function PairPreviewSection({ title, pairs }: { title: string; pairs: PairPreview[] }) {
+  return (
+    <div className="mt-4 border-t border-slate-200 pt-4">
+      <p className="text-sm font-semibold text-slate-700 mb-2">{title}</p>
+      <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+        {pairs.map((pair) => (
+          <div key={pair.pairId} className="rounded-lg border border-slate-200 bg-white p-2">
+            <p className="text-xs font-semibold text-slate-500 mb-2">Pair {pair.pairId}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <img src={pair.imageA} alt={`Pair ${pair.pairId} image A`} className="h-24 w-full rounded border object-cover" />
+              <img src={pair.imageB} alt={`Pair ${pair.pairId} image B`} className="h-24 w-full rounded border object-cover" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
