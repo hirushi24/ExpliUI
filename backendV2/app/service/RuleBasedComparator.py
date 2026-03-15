@@ -895,6 +895,7 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
 
     img1 = _read_image(saved_paths[0])
     img2 = _read_image(saved_paths[1])
+    heatmap_url = _create_heatmap_image(payload.user_id, payload.pair_id, saved_paths[0], img1, img2)
 
     #elements_1 = _detect_ui_elements(img1)
    # elements_2 = _detect_ui_elements(img2)
@@ -912,6 +913,7 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
             "images": {
                 "baseline": str(saved_paths[0]),
                 "candidate": str(saved_paths[1]),
+                "heatmap": heatmap_url,
             },
             "issues": [],
             "explanations": [],
@@ -1062,6 +1064,7 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
         "images": {
             "baseline": str(saved_paths[0]),
             "candidate": str(saved_paths[1]),
+            "heatmap": heatmap_url,
         },
         "issues": result_data.get("Issue", []),
         "explanations": result_data.get("Explanation", []),
@@ -1111,6 +1114,27 @@ def _save_screenshots(user_id: int, pair_id: int, screenshots: list) -> list[Pat
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Failed to save image {shot.image_name}: {exc}")
     return saved_paths
+
+
+def _create_heatmap_image(user_id: int, pair_id: int, baseline_path: Path, img1: np.ndarray, img2: np.ndarray) -> str | None:
+    try:
+        if img1 is None or img2 is None:
+            return None
+
+        if img1.shape[:2] != img2.shape[:2]:
+            img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]), interpolation=cv2.INTER_LINEAR)
+
+        diff = cv2.absdiff(img1, img2)
+        gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+        heatmap = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+        overlay = cv2.addWeighted(img1, 0.45, heatmap, 0.55, 0)
+
+        out_path = baseline_path.parent / "heatmap.png"
+        cv2.imwrite(str(out_path), overlay)
+
+        return f"/static/{user_id}/{pair_id}/{out_path.name}"
+    except Exception:
+        return None
 
 
 def _read_image(path: Path) -> np.ndarray:

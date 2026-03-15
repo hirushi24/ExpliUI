@@ -640,6 +640,49 @@ const toIssueType = (value?: string) => {
   return "visual";
 };
 
+const BACKEND_STATIC_ORIGIN = import.meta.env.VITE_UPLOAD_SERVER_ORIGIN || "";
+
+const toAbsoluteMediaUrl = (rawUrl?: string) => {
+  if (!rawUrl) return rawUrl;
+
+  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || rawUrl.startsWith("data:")) {
+    return rawUrl;
+  }
+
+  const normalized = rawUrl.replaceAll("\\", "/");
+
+  // backend may return local file path like: upload_image\\20256\\1\\img_A.png
+  if (normalized.startsWith("upload_image/")) {
+    const staticPath = normalized.replace(/^upload_image\//, "/static/");
+    return BACKEND_STATIC_ORIGIN ? `${BACKEND_STATIC_ORIGIN}${staticPath}` : staticPath;
+  }
+
+  if (normalized.startsWith("/static/")) {
+    return BACKEND_STATIC_ORIGIN ? `${BACKEND_STATIC_ORIGIN}${normalized}` : normalized;
+  }
+
+  if (normalized.startsWith("/")) {
+    return normalized;
+  }
+
+  return `${BACKEND_STATIC_ORIGIN}/${normalized}`;
+};
+
+const resolveHeatmapUrl = (pair: any, issueObject: any) => {
+  const heatmapPath = (
+    issueObject?.heatmap_url ||
+    issueObject?.heatmapUrl ||
+    pair?.heatmap_url ||
+    pair?.heatmapUrl ||
+    pair?.images?.heatmap ||
+    pair?.images?.diff ||
+    pair?.images?.difference ||
+    undefined
+  );
+
+  return toAbsoluteMediaUrl(heatmapPath);
+};
+
 export default function Results() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
@@ -935,8 +978,12 @@ const fetchResults = async () => {
                 pair?.suggested_fix ||
                 "Inspect the matched element in both screenshots and align layout/content/styles for parity.",
               evidence: {
-                screenshot_a_url: pair?.images?.baseline || "/mock/screenshot_a.png",
-                screenshot_b_url: pair?.images?.candidate || "/mock/screenshot_b.png",
+                // screenshot_a_url: pair?.images?.baseline || "/mock/screenshot_a.png",
+                // screenshot_b_url: pair?.images?.candidate || "/mock/screenshot_b.png",
+                // heatmap_url: resolveHeatmapUrl(pair, issueObject),
+                screenshot_a_url: toAbsoluteMediaUrl(pair?.images?.baseline) || "/mock/screenshot_a.png",
+                screenshot_b_url: toAbsoluteMediaUrl(pair?.images?.candidate) || "/mock/screenshot_b.png",
+                heatmap_url: resolveHeatmapUrl(pair, issueObject),
                 bounding_box: {
                   x: x1,
                   y: y1,
@@ -1420,6 +1467,24 @@ const fetchResults = async () => {
                 </li>
               ))}
             </ol>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
+            <h4 className="text-sm font-semibold text-slate-700 mb-2">Issue Heatmap</h4>
+
+            {evidenceIssue?.evidence?.heatmap_url ? (
+              <div className="rounded-lg overflow-hidden border border-slate-200 bg-white">
+                <img
+                  src={evidenceIssue.evidence.heatmap_url}
+                  alt={`Heatmap for pair ${pairLabel}`}
+                  className="w-full h-auto max-h-[420px] object-contain bg-slate-100"
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">
+                Heatmap is not available for this pair in the current response.
+              </p>
+            )}
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
