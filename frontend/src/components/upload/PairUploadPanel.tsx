@@ -2135,6 +2135,10 @@ function CropModal({
   const [crop, setCrop] = useState<CropRect>({ xPct: 10, yPct: 10, widthPct: 80, heightPct: 80 });
 
   const frameRef = React.useRef<HTMLDivElement | null>(null);
+
+  const imageRef = React.useRef<HTMLImageElement | null>(null);
+  const [imageNaturalSize, setImageNaturalSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+
   const dragRef = React.useRef<{
     type: "move" | "left" | "right" | "top" | "bottom";
     startX: number;
@@ -2143,6 +2147,34 @@ function CropModal({
   } | null>(null);
 
   const MIN_SIZE_PCT = 5;
+
+  const getImageBoundsInFrame = () => {
+    const frameEl = frameRef.current;
+    if (!frameEl) return { x: 0, y: 0, width: 1, height: 1 };
+
+    const frameWidth = frameEl.clientWidth;
+    const frameHeight = frameEl.clientHeight;
+
+    const naturalWidth = imageNaturalSize.width;
+    const naturalHeight = imageNaturalSize.height;
+
+    if (!naturalWidth || !naturalHeight || !frameWidth || !frameHeight) {
+      return { x: 0, y: 0, width: Math.max(1, frameWidth), height: Math.max(1, frameHeight) };
+    }
+
+    const imageAspect = naturalWidth / naturalHeight;
+    const frameAspect = frameWidth / frameHeight;
+
+    if (imageAspect > frameAspect) {
+      const width = frameWidth;
+      const height = width / imageAspect;
+      return { x: 0, y: (frameHeight - height) / 2, width, height };
+    }
+
+    const height = frameHeight;
+    const width = height * imageAspect;
+    return { x: (frameWidth - width) / 2, y: 0, width, height };
+  };
 
   const clampCrop = (next: CropRect): CropRect => {
     const clamped: CropRect = {
@@ -2180,11 +2212,15 @@ function CropModal({
     const onPointerMove = (e: PointerEvent) => {
       if (!dragRef.current || !frameRef.current) return;
 
-      const frameRect = frameRef.current.getBoundingClientRect();
-      if (!frameRect.width || !frameRect.height) return;
+      // const frameRect = frameRef.current.getBoundingClientRect();
+      // if (!frameRect.width || !frameRect.height) return;
+      const imageBounds = getImageBoundsInFrame();
+      if (!imageBounds.width || !imageBounds.height) return;
 
-      const deltaXPct = ((e.clientX - dragRef.current.startX) / frameRect.width) * 100;
-      const deltaYPct = ((e.clientY - dragRef.current.startY) / frameRect.height) * 100;
+      // const deltaXPct = ((e.clientX - dragRef.current.startX) / frameRect.width) * 100;
+      // const deltaYPct = ((e.clientY - dragRef.current.startY) / frameRect.height) * 100;
+       const deltaXPct = ((e.clientX - dragRef.current.startX) / imageBounds.width) * 100;
+      const deltaYPct = ((e.clientY - dragRef.current.startY) / imageBounds.height) * 100;
 
       const { type, startCrop } = dragRef.current;
       const next: CropRect = { ...startCrop };
@@ -2256,16 +2292,41 @@ function CropModal({
             ref={frameRef}
             className="relative rounded-lg border bg-slate-300 overflow-hidden h-[60vh] min-h-[240px] max-h-[60vh]"
           >
-            <img src={imageUrl} alt="Crop preview" className="w-full h-full object-contain select-none" draggable={false} />
+            {/* <img src={imageUrl} alt="Crop preview" className="w-full h-full object-contain select-none" draggable={false} />
+             */}
+
+            <img
+              ref={imageRef}
+              src={imageUrl}
+              alt="Crop preview"
+              className="w-full h-full object-contain select-none"
+              draggable={false}
+              onLoad={(event) => {
+                const target = event.currentTarget;
+                setImageNaturalSize({
+                  width: target.naturalWidth || 0,
+                  height: target.naturalHeight || 0,
+                });
+              }}
+            /> 
 
             <div
               className="absolute border-2 border-blue-500 bg-blue-500/10 shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]"
-              style={{
-                left: `${crop.xPct}%`,
-                top: `${crop.yPct}%`,
-                width: `${crop.widthPct}%`,
-                height: `${crop.heightPct}%`,
-              }}
+              // style={{
+              //   left: `${crop.xPct}%`,
+              //   top: `${crop.yPct}%`,
+              //   width: `${crop.widthPct}%`,
+              //   height: `${crop.heightPct}%`,
+              // }}
+              style={(() => {
+                const bounds = getImageBoundsInFrame();
+                return {
+                  left: `${bounds.x + (crop.xPct / 100) * bounds.width}px`,
+                  top: `${bounds.y + (crop.yPct / 100) * bounds.height}px`,
+                  width: `${(crop.widthPct / 100) * bounds.width}px`,
+                  height: `${(crop.heightPct / 100) * bounds.height}px`,
+                };
+              })()}
             >
               <button
                 type="button"
