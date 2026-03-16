@@ -302,9 +302,19 @@ const buildPdfBlob = async (
   };
 
   const addImage = (image: EmbeddedImage, x: number, yBottom: number, width: number, height: number) => {
+
+    const imageAspect = image.width / image.height;
+    const boxAspect = width / height;
+
+    const drawWidth = imageAspect > boxAspect ? width : height * imageAspect;
+    const drawHeight = imageAspect > boxAspect ? width / imageAspect : height;
+    const drawX = x + (width - drawWidth) / 2;
+    const drawYBottom = yBottom + (height - drawHeight) / 2;
+
     const name = `Im${state.page.images.length + 1}`;
     state.page.images.push({ name, image });
-    state.page.contentParts.push(`q ${width} 0 0 ${height} ${x} ${yBottom} cm /${name} Do Q`);
+    // state.page.contentParts.push(`q ${width} 0 0 ${height} ${x} ${yBottom} cm /${name} Do Q`);
+    state.page.contentParts.push(`q ${drawWidth} 0 0 ${drawHeight} ${drawX} ${drawYBottom} cm /${name} Do Q`);
   };
 
   const addPairSection = async (pair: PairPreview, includeHeatmap: boolean) => {
