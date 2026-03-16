@@ -47,7 +47,7 @@ interface Props {
 export function HeatmapOverlay({ heatmapUrl, zoom }: Props) {
   return (
     <div className="border rounded-lg overflow-hidden bg-white">
-      <div className="bg-slate-50 border-b p-3">
+      {/* <div className="bg-slate-50 border-b p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4 text-sm text-slate-600">
             <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export function HeatmapOverlay({ heatmapUrl, zoom }: Props) {
             Red areas indicate the highest visual differences
           </span>
         </div>
-      </div>
+      </div> */}
 
       <img
         src={heatmapUrl}
