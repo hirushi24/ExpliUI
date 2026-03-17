@@ -882,7 +882,7 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
     if len(payload.image_list) != 2:
         raise HTTPException(status_code=400, detail="Exactly 2 screenshots are required for rule-based comparison")
     
-    BEST_MODEL_PATH = os.getenv("UI_MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV3.pt")
+    BEST_MODEL_PATH = os.getenv("UI_MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV4.pt")
     
     try:
         best_model = YOLO(BEST_MODEL_PATH)

@@ -1294,7 +1294,7 @@ const fetchResults = async () => {
         {/* Export Panel */}
         {/* <ExportPanel sessionId={sessionId!} results={results} /> */}
         <ExportPanel
-          sessionId={sessionId!}
+          // sessionId={sessionId!}
           results={results}
           pairsWithIssues={pairsWithIssuesPreviews}
           pairsWithoutIssues={pairsWithoutIssuesPreviews}

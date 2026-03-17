@@ -452,7 +452,7 @@ class SiameseEfficientNet(torch.nn.Module):
 
 
 # Get the path from environment variables, with a "fallback" default
-MODEL_PATH = os.getenv("MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV3.pt")
+MODEL_PATH = os.getenv("MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV4.pt")
 
 # Ensure the class is available under __main__ for legacy pickles
 main_mod = sys.modules.get("__main__")

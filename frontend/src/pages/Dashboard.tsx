@@ -161,7 +161,7 @@
 // }
 
 
-import { ArrowRight, CheckCircle2, Upload } from "lucide-react";
+import { ArrowRight, CheckCircle2, Globe, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
@@ -238,6 +238,38 @@ export default function Dashboard() {
               </li>
             </ul>
           </div>
+
+          <button
+          onClick={() => handleStart("/new-test/url")}
+          className="group relative bg-white rounded-2xl p-8 border border-slate-200
+                     hover:border-purple-500 hover:shadow-xl transition-all duration-300
+                     text-left focus:outline-none"
+        >
+     
+          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition
+                          bg-gradient-to-br from-purple-50 to-transparent pointer-events-none" />
+
+          <div className="relative">
+            <div className="w-14 h-14 rounded-xl bg-purple-100 text-purple-600
+                            flex items-center justify-center mb-6
+                            group-hover:scale-110 transition-transform">
+              <Globe className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              Test Using URL
+            </h3>
+
+            <p className="text-slate-500 leading-relaxed">
+              Provide a website URL and let our bot automatically capture
+              cross-browser screenshots for comparison.
+            </p>
+
+            <div className="mt-6 text-sm font-medium text-purple-600">
+              Get started →
+            </div>
+          </div>
+        </button>
         </div>
       </div>
     </section>
