@@ -47,17 +47,17 @@ export function Header() {
         ExpliUI
       </Link>
 
-      <div className="flex gap-2">
+      {/* <div className="flex gap-2">
         <Link to="/history" className={navClass(isActive("/history"))}>
           <History className="w-4 h-4" />
           History
-        </Link>
+        </Link> */}
 {/* 
         <Link to="/settings" className={navClass(isActive("/settings"))}>
           <Settings className="w-4 h-4" />
           Settings
         </Link> */}
-      </div>
+      {/* </div> */}
     </header>
   );
 }

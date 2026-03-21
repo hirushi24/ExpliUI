@@ -704,10 +704,18 @@ export default function UploadTest() {
     );
   };
 
+   const confirmedReadyPairs = pairs.filter((p) => p.status === "ready" && p.stage === "confirmed");
+  const hasInProgressPairs = pairs.some((p) => {
+    const hasAnyUploads = Boolean(p.fileA || p.fileB || p.previewA || p.previewB);
+    return hasAnyUploads && (p.status !== "ready" || p.stage !== "confirmed");
+  });
+  const canProceedToNextStep = confirmedReadyPairs.length > 0 && !hasInProgressPairs && !isUploading;
+
 
   const handleSubmit = async () => {
-    const readyPairs = pairs.filter((p) => p.status === "ready" && p.stage === "confirmed");
-    if (readyPairs.length === 0) {
+    // const readyPairs = pairs.filter((p) => p.status === "ready" && p.stage === "confirmed");
+    // if (readyPairs.length === 0) {
+     if (confirmedReadyPairs.length === 0) {
       alert("Please upload at least one complete pair");
       return;
     }
@@ -723,8 +731,10 @@ export default function UploadTest() {
 
       const results: any[] = [];
 
-      for (let i = 0; i < readyPairs.length; i++) {
-        const pair = readyPairs[i];
+      // for (let i = 0; i < readyPairs.length; i++) {
+      //   const pair = readyPairs[i];
+      for (let i = 0; i < confirmedReadyPairs.length; i++) {
+        const pair = confirmedReadyPairs[i];
         if (!pair.fileA || !pair.fileB) continue;
 
         const base64A = await fileToBase64(pair.fileA);
@@ -754,7 +764,8 @@ export default function UploadTest() {
         const response = await postCompareRuleBasedWithRetry(payload);
         results.push(response.data?.results);
 
-        if (i < readyPairs.length - 1) {
+        // if (i < readyPairs.length - 1) {
+        if (i < confirmedReadyPairs.length - 1) {
           await delay(250);
         }
       }
@@ -769,7 +780,8 @@ export default function UploadTest() {
 
       navigate("/new-test/configure", {
         state: {
-          pairs: readyPairs,
+          // pairs: readyPairs,
+          pairs: confirmedReadyPairs,
           uploadResponse: response.data,
         },
       });
@@ -808,7 +820,8 @@ export default function UploadTest() {
 
           <Button
             onClick={handleSubmit}
-            disabled={pairs.some((p) => p.status !== "ready" || p.stage !== "confirmed") || isUploading}
+            // disabled={pairs.some((p) => p.status !== "ready" || p.stage !== "confirmed") || isUploading}
+            disabled={!canProceedToNextStep}
           >
             {isUploading ? "Uploading..." : "Next Step"}
           </Button>

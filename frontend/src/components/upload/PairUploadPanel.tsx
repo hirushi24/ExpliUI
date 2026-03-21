@@ -1609,7 +1609,7 @@ function isMetaComplete(m: EnvironmentMetadata) {
   if (!m.deviceType) return false;
   if (!m.os) return false;
   if (!m.browser) return false;
-  if (m.deviceType === "mobile" && !m.deviceModel) return false;
+  // if (m.deviceType === "mobile" && !m.deviceModel) return false;
   return true;
 }
 
@@ -1940,7 +1940,7 @@ export function PairUploadPanel({
             <div>
               <h2 className="text-xl font-bold text-slate-800">Upload Screenshots & Metadata</h2>
               <p className="text-sm text-slate-500 mt-1">
-                Upload screenshots, crop if needed, then set environment details.
+                Upload screenshots, crop if needed, then set environment details. Ensure both screenshots capture the visual content. 
               </p>
             </div>
 

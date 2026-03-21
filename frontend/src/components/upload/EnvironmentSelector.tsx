@@ -369,17 +369,17 @@ const MOBILE_BROWSERS_BY_OS: Record<string, { value: string; label: string }[]> 
   ],
 };
 
-const ANDROID_DEVICES = [
-  { value: "samsung_s24", label: "Samsung S24" },
-  { value: "pixel_8", label: "Pixel 8" },
-  { value: "redmi_note_13", label: "Redmi Note 13" },
-];
+// const ANDROID_DEVICES = [
+//   { value: "samsung_s24", label: "Samsung S24" },
+//   { value: "pixel_8", label: "Pixel 8" },
+//   { value: "redmi_note_13", label: "Redmi Note 13" },
+// ];
 
-const IOS_DEVICES = [
-  { value: "iphone_13", label: "iPhone 13" },
-  { value: "iphone_14", label: "iPhone 14" },
-  { value: "iphone_15_pro", label: "iPhone 15 Pro" },
-];
+// const IOS_DEVICES = [
+//   { value: "iphone_13", label: "iPhone 13" },
+//   { value: "iphone_14", label: "iPhone 14" },
+//   { value: "iphone_15_pro", label: "iPhone 15 Pro" },
+// ];
 
 function normalize(v?: string) {
   return (v || "").trim().toLowerCase();
@@ -434,20 +434,20 @@ export function EnvironmentSelector({
   const browserDisabled =
     !!disabled || (isTest ? !baselineOs : !osValue);
 
-  // Device model options only for mobile + filtered by OS (baseline OS for test too)
-  const effectiveOsForDevice = isTest ? baselineOs : osValue;
+  // // Device model options only for mobile + filtered by OS (baseline OS for test too)
+  // const effectiveOsForDevice = isTest ? baselineOs : osValue;
 
-  const deviceModelOptions =
-    effectiveOsForDevice === "android"
-      ? ANDROID_DEVICES
-      : effectiveOsForDevice === "ios"
-      ? IOS_DEVICES
-      : [];
+  // const deviceModelOptions =
+  //   effectiveOsForDevice === "android"
+  //     ? ANDROID_DEVICES
+  //     : effectiveOsForDevice === "ios"
+  //     ? IOS_DEVICES
+  //     : [];
 
-  const deviceModelDisabled =
-    !!disabled ||
-    isTest || // must follow baseline
-    !effectiveOsForDevice; // until OS chosen
+  // const deviceModelDisabled =
+  //   !!disabled ||
+  //   isTest || // must follow baseline
+  //   !effectiveOsForDevice; // until OS chosen
 
   return (
     <div className="mt-4 bg-white rounded-xl border p-4">
@@ -517,7 +517,7 @@ export function EnvironmentSelector({
         </div>
 
         {/* Device Model (mobile only) */}
-        {normalize(metadata.deviceType) === "mobile" && (
+        {/* {normalize(metadata.deviceType) === "mobile" && (
           <div>
             <label className="text-xs font-semibold text-slate-500 block mb-1">Device Model</label>
             <select
@@ -537,7 +537,7 @@ export function EnvironmentSelector({
               ))}
             </select>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

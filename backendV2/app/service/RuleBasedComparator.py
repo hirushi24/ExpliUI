@@ -1235,20 +1235,44 @@ def _detect_ui_elements(image: np.ndarray) -> list[DetectedElement]:
     return elements
 
 
-def _classify_region(width: int, height: int, ratio: float, area: int, image_area: int) -> str:
+# def _classify_region(width: int, height: int, ratio: float, area: int, image_area: int) -> str:
+#     normalized_area = area / max(image_area, 1)
+
+#     if ratio > 2.5 and 24 <= height <= 90:
+#         return "button"
+#     if 1.8 <= ratio <= 12 and 20 <= height <= 75:
+#         return "field"
+#     if normalized_area > 0.16:
+#         return "image"
+#     if ratio > 3.2 and height < 28:
+#         return "text"
+#     if ratio > 1.6 and 28 <= height <= 120:
+#         return "heading"
+#     return "container"
+
+def _classify_region(width: int, height: int, ratio: float, area: int, image_area: int,
+                     has_text: bool = False, is_blue: bool = False, is_underlined: bool = False,
+                     has_border: bool = False) -> str:
     normalized_area = area / max(image_area, 1)
 
-    if ratio > 2.5 and 24 <= height <= 90:
-        return "button"
-    if 1.8 <= ratio <= 12 and 20 <= height <= 75:
-        return "field"
-    if normalized_area > 0.16:
+    # image: large visual block
+    if normalized_area > 0.16 and not has_text:
         return "image"
-    if ratio > 3.2 and height < 28:
-        return "text"
-    if ratio > 1.6 and 28 <= height <= 120:
-        return "heading"
-    return "container"
+
+    # link: text-like, often blue/underlined
+    if has_text and (is_blue or is_underlined) and height < 40:
+        return "link"
+
+    # button: medium rectangle, usually with text and border/fill
+    if ratio > 2.5 and 24 <= height <= 90 and has_text:
+        return "button"
+
+    # field: wide rectangular input region
+    if 1.8 <= ratio <= 12 and 20 <= height <= 75 and has_border:
+        return "field"
+
+    # text: fallback text region
+    return "text"
 
 
 def _confidence_from_geometry(width: int, height: int, area: int, image_area: int) -> float:

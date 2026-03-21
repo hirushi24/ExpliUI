@@ -1539,7 +1539,7 @@ const fetchResults = async () => {
             </ol>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
+          {/* <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
             <h4 className="text-sm font-semibold text-slate-700 mb-2">Issue Heatmap</h4>
 
             {evidenceIssue?.evidence?.heatmap_url ? (
@@ -1555,7 +1555,7 @@ const fetchResults = async () => {
                 Heatmap is not available for this pair in the current response.
               </p>
             )}
-          </div>
+          </div> */}
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 mb-3">
             <h4 className="text-sm font-semibold text-slate-700 mb-2">Suggested Fixes</h4>
