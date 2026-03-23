@@ -37,7 +37,7 @@ const STORAGE_KEY = "expliui_settings_v1";
 // };
 
 const DEFAULTS: SettingsState = {
-  apiBaseUrl: "http://localhost:8000",
+  apiBaseUrl: "/api",
   defaultComparisonMode: "desktop-desktop",
   defaultDeviceType: "desktop",
   showHeatmapByDefault: true,

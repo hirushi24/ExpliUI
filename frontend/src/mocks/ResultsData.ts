@@ -119,7 +119,7 @@ export const mockResults: TestResults = {
   session_id: "sess_abc123",
   test_type: "upload",
 
-  comparison_mode: "desktop-desktop",
+  comparison_mode: "desktop_vs_desktop",
 
   summary: {
     total_pairs: 6,

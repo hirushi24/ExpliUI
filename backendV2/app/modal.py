@@ -181,10 +181,10 @@ class PredictRequestByUrl(BaseModel):
     
 class RuleBasedImageInput(BaseModel):
     image_name: str
-    image_base64: str
-    browser: str  # chrome, firefox, safari
-    os: str  # windows, macos
-    device_type: str  # mobile, desktop
+    image_base64: Optional[str] = None
+    browser: Optional[str] = None  # chrome, firefox, safari
+    os: Optional[str] = None  # windows, macos
+    device_type: Optional[str] = None  # mobile, desktop
 
 
 class RuleBasedCompareRequest(BaseModel):

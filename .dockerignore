@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/build
+**/.git
+**/.venv
+**/upload_image
+docker-compose.yml
+.dockerignore

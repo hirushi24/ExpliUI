@@ -68,7 +68,8 @@ def save_screenshots(user_id: int, pair_id: int, screenshots: list[ScreenshotMet
     upload_dir.mkdir(parents=True, exist_ok=True)
     
     # base_url =  os.getenv("BASE_URL", "http://localhost:8000/static")  # Fallback to a default if not set
-    base_url = "http://127.0.0.1:8080/static"
+    # base_url = "http://127.0.0.1:8080/static"
+    base_url = "/static"
     saved_paths = []
 
     for snack in screenshots:

@@ -11,5 +11,6 @@ scikit-image
 pytesseract
 Pillow
 ultralytics
-selenium webdriver-manager
+selenium
+webdriver-manager
 google-generativeai

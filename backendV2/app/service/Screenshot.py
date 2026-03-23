@@ -172,10 +172,13 @@ def get_driver(browser_name: str):
     browser_name = (browser_name or "").lower().strip()
 
     if browser_name == "chrome":
-        # Let Selenium Manager auto-detect chromedriver (same approach as Edge)
-        # This avoids version mismatch issues from webdriver_manager
         options = ChromeOptions()
         _base_headless_args(options, "chrome")
+
+        # In Linux/Docker, Chromium is typically installed at /usr/bin/chromium
+        if platform.system().lower() == "linux":
+            options.binary_location = "/usr/bin/chromium"
+
         return webdriver.Chrome(options=options)
 
     if browser_name == "firefox":
@@ -194,13 +197,13 @@ def get_driver(browser_name: str):
             raise
 
     if browser_name == "edge":
-        # Use Selenium Manager instead of webdriver_manager for Edge
-        # This prevents the "Could not reach host" download error.
         options = EdgeOptions()
         options.use_chromium = True
         _base_headless_args(options, "edge")
 
-        # Optional automation flags
+        if platform.system().lower() == "linux":
+            options.binary_location = "/usr/bin/chromium"
+
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 
@@ -295,7 +298,8 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
 def capture(req: PredictRequestByUrl):
     upload_dir = Path(f"upload_image/{req.user_id}/{req.pair_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
-    base_url = "http://127.0.0.1:8080/static"
+    # Use relative path so the frontend resolves it correctly in both local and deployment
+    base_url = "/static"
 
     saved_paths = []
     errors = []

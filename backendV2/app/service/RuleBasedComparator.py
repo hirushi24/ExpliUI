@@ -882,7 +882,7 @@ async def compare_screenshots_rule_based(payload: RuleBasedCompareRequest) -> di
     if len(payload.image_list) != 2:
         raise HTTPException(status_code=400, detail="Exactly 2 screenshots are required for rule-based comparison")
     
-    BEST_MODEL_PATH = os.getenv("UI_MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV4.pt")
+    BEST_MODEL_PATH = os.getenv("UI_MODEL_PATH", "modelV4.pt")
     
     try:
         best_model = YOLO(BEST_MODEL_PATH)
@@ -1106,12 +1106,24 @@ def _save_screenshots(user_id: int, pair_id: int, screenshots: list) -> list[Pat
     saved_paths = []
     for shot in screenshots:
         try:
-            img_data = base64.b64decode(shot.image_base64.split(",")[-1])
             path = upload_dir / shot.image_name
-            with open(path, "wb") as file:
-                file.write(img_data)
+            
+            # If base64 is provided, overwrite/save the image
+            if shot.image_base64:
+                img_data = base64.b64decode(shot.image_base64.split(",")[-1])
+                with open(path, "wb") as file:
+                    file.write(img_data)
+            # If base64 is missing, check if the file already exists (e.g. from CaptureByUrl)
+            elif not path.exists():
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Image {shot.image_name} not found on server and no base64 provided."
+                )
+            
             saved_paths.append(path)
         except Exception as exc:
+            if isinstance(exc, HTTPException):
+                raise exc
             raise HTTPException(status_code=400, detail=f"Failed to save image {shot.image_name}: {exc}")
     return saved_paths
 
@@ -1218,7 +1230,9 @@ def _detect_ui_elements(image: np.ndarray) -> list[DetectedElement]:
             continue
 
         aspect_ratio = w / max(h, 1)
-        class_name = _classify_region(w, h, aspect_ratio, area, image_area)
+        class_name = _classify_region(w, h, aspect_ratio, area, image_area,
+                                     has_text=False, is_blue=False,
+                                     is_underlined=False, has_border=False)
 
         confidence = _confidence_from_geometry(w, h, area, image_area)
         elements.append(

@@ -261,11 +261,19 @@ const handleStartAnalysis = async () => {
   try {
     setIsAnalyzing(true);
 
-    // Convert captured screenshot URLs to base64 data URLs
-    const [base64A, base64B] = await Promise.all([
-      imageUrlToBase64(screenshotAUrl),
-      imageUrlToBase64(screenshotBUrl),
-    ]);
+    let base64A = "";
+    let base64B = "";
+
+    // Optimization: If we have image_name, the backend already has the file.
+    // We only need to convert to base64 if we DON'T have a server-side filename.
+    if (!imgA?.image_name || !imgB?.image_name) {
+      const [b64A, b64B] = await Promise.all([
+        imageUrlToBase64(screenshotAUrl),
+        imageUrlToBase64(screenshotBUrl),
+      ]);
+      base64A = b64A;
+      base64B = b64B;
+    }
 
     const payload = {
       user_id: Number(localStorage.getItem("Id")),
@@ -273,11 +281,17 @@ const handleStartAnalysis = async () => {
       image_list: [
         {
           image_name: imgA?.image_name || "url_capture_A.png",
-          image_base64: base64A,
+          image_base64: base64A || null,
+          browser: (imgA?.browser || "").toLowerCase(),
+          os: (imgA?.os || "").toLowerCase(),
+          device_type: "desktop",
         },
         {
           image_name: imgB?.image_name || "url_capture_B.png",
-          image_base64: base64B,
+          image_base64: base64B || null,
+          browser: (imgB?.browser || "").toLowerCase(),
+          os: (imgB?.os || "").toLowerCase(),
+          device_type: "desktop",
         },
       ],
     };
@@ -286,7 +300,7 @@ const handleStartAnalysis = async () => {
       ...payload,
       image_list: payload.image_list.map((img) => ({
         ...img,
-        image_base64: `${img.image_base64.slice(0, 30)}...`, // don't log full base64
+        image_base64: img.image_base64 ? `${img.image_base64.slice(0, 30)}...` : "SKIPPED (already on server)",
       })),
     });
 

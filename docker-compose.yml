@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  backend:
+    build:
+      context: ./backendV2
+      dockerfile: Dockerfile
+    container_name: expliui-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backendV2/upload_image:/app/upload_image
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GEMINI_API_KEY=your_gemini_api_key_here
+    shm_size: '2gb'
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: expliui-frontend
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

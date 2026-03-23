@@ -1,0 +1,18 @@
+node_modules
+dist
+build
+.git
+.gitignore
+Dockerfile
+# nginx.conf (Removed from ignore as it is needed for the build)
+.env
+.eslintcache
+.next
+out
+.cache
+coverage
+stats.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
