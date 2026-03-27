@@ -33,14 +33,14 @@ def detect_elements(predict_request: PredictRequest):
         # Save the screenshots and get their file paths
         saved_paths = save_screenshots(predict_request.user_id, pair_id, screenshots)
         
-        img1_path = saved_paths[0].image_path  # base image path
+        img1_path = saved_paths[0].image_path # base image path
         img2_path = saved_paths[1].image_path # comparison image path
 
         element_Json = get_ui_elements(img1_path, img2_path, best_model)
 
         results.append({
             "pair_id": pair_id,
-            "image1": saved_paths[0].image_url,  # base imag
+            "image1": saved_paths[0].image_url, # base imag
             "image2": saved_paths[1].image_url, # comparison image
             "image1_device_type": saved_paths[0].device_type,
             "image2_device_type": saved_paths[1].device_type,
@@ -67,8 +67,6 @@ def save_screenshots(user_id: int, pair_id: int, screenshots: list[ScreenshotMet
     upload_dir = Path(f"upload_image/{user_id}/{pair_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
     
-    # base_url =  os.getenv("BASE_URL", "http://localhost:8000/static")  # Fallback to a default if not set
-    # base_url = "http://127.0.0.1:8080/static"
     base_url = "/static"
     saved_paths = []
 

@@ -19,8 +19,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const initSession = async () => {
     setIsLoading(true);
     try { 
-      // Changed from "/session/create" to "/create_test"
-      // This matches your backend: @router.post("/create_test")
       const res = await api.post("/create_test"); 
       
       const newId = res.data.session_id;

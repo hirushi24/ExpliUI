@@ -1,10 +1,7 @@
-// src/types/results.ts
-
 export interface DetectedIssue {
   id: string;
   pair_id?: number;
   issue_type: string; // "layout", "typography", "visual", "component"
-  // severity: "high" | "medium" | "low";
    severity: "critical" | "high" | "medium" | "low";
   category: string; // "flexbox_gap", "font_weight_rendering", etc.
   
