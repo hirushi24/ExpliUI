@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast, Toaster } from "react-hot-toast";
+// import { toast, Toaster } from "react-hot-toast";
 import { PairListPanel } from "../components/upload/PairListPanel";
 import { PairUploadPanel } from "../components/upload/PairUploadPanel";
 import type { ScreenshotPair, EnvironmentMetadata } from "../types";
@@ -70,6 +70,7 @@ export default function UploadTest() {
   const [activeId, setActiveId] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const activePair = pairs.find((p) => p.id === activeId)!;
 
@@ -184,6 +185,7 @@ export default function UploadTest() {
       return;
     }
 
+    setErrorMessage(null);
     setIsUploading(true);
     setUploadProgress(5);
     try {
@@ -244,12 +246,13 @@ export default function UploadTest() {
       });
     } catch (error: any) {
       console.error("Upload error:", error);
-      const status = error?.response?.status;
-      const details = error?.response?.data?.detail || error?.response?.data?.message || error.message;
-      const hint = status === 429
-        ? "Server is rate-limiting requests. Please retry in a few seconds."
-        : "If this keeps happening, check backend logs/CORS config.";
-      toast.error("Resources insufficient please try again later with less pairs");
+      // const status = error?.response?.status;
+      // const details = error?.response?.data?.detail || error?.response?.data?.message || error.message;
+      // const hint = status === 429
+      //   ? "Server is rate-limiting requests. Please retry in a few seconds."
+      //   : "If this keeps happening, check backend logs/CORS config.";
+      // toast.error("Resources insufficient please try again later with less pairs");
+      setErrorMessage("Resources insufficient please try again later");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -260,7 +263,12 @@ export default function UploadTest() {
     <div className="flex h-[calc(100vh-64px)]">
       <PairListPanel pairs={pairs} activePairId={activeId} onSelect={setActiveId} onAdd={handleAddPair} />
 
-      <Toaster />
+      {/* <Toaster /> */}
+      {errorMessage ? (
+        <div className="fixed top-4 right-4 z-50 rounded-md bg-red-600 px-4 py-2 text-sm text-white shadow-lg">
+          {errorMessage}
+        </div>
+      ) : null}
 
       <div className="flex-1 flex flex-col">
         {isUploading ? (

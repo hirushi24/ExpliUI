@@ -26,14 +26,14 @@ export function PairListPanel({ pairs, activePairId, onSelect, onAdd }: Props) {
               "w-full p-3 rounded-lg flex items-center justify-between text-sm transition-all border",
               activePairId === pair.id
                 ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
-                : "bg-white border-transparent hover:bg-slate-50 text-slate-600"
+                : "bg-blue-50 border-transparent hover:bg-slate-50 text-slate-600"
             )}
           >
             <span className="font-medium">Pair {index + 1}</span>
             {pair.status === "uploaded" ? (
               <CheckCircle className="w-4 h-4 text-green-500" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-slate-300" />
+              <AlertCircle className="w-4 h-4 text-blue-50" />
             )}
           </button>
         ))}
