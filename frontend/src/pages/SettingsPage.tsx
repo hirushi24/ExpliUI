@@ -1,3 +1,4 @@
+// Archived draft for a future settings page; preserved as commented reference code for now.
 // import { useEffect, useMemo, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import { Save, RotateCcw, Link2, Sliders } from "lucide-react";

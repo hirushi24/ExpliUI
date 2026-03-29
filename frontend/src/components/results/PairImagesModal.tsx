@@ -1,4 +1,4 @@
-// // src/components/results/PairImagesModal.tsx
+// Archived draft for an older pair-image modal; kept commented out as a design reference.
 // import React from "react";
 // import { X } from "lucide-react";
 // import type { DetectedIssue } from "../../types/Results";

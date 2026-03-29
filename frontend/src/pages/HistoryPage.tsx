@@ -1,3 +1,4 @@
+// Archived draft for a future history page; preserved as commented reference code for now.
 // import { useMemo, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import {

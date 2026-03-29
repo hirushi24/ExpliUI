@@ -1,3 +1,4 @@
+// Shared upload-flow types for pair state, environment metadata, and comparison mode selection.
 export interface EnvironmentMetadata {
   deviceType: "desktop" | "mobile";
   browser: string;

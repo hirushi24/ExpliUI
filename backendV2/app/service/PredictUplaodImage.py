@@ -18,7 +18,7 @@ from backendV2.app.service.RuleBasedComparator import compare_ui_pair_rule_based
 load_dotenv()
 
 
-# --- STEP 1: class definition ---
+# Legacy Siamese model used by the older upload prediction pipeline.
 class SiameseEfficientNet(torch.nn.Module):
     def __init__(self, num_classes=5):
         super(SiameseEfficientNet, self).__init__()
@@ -50,17 +50,17 @@ class SiameseEfficientNet(torch.nn.Module):
         return self.binary_head(diff), self.class_head(diff)
 
 
-# Get the path from environment variables, with a "fallback" default
+# The model path can be overridden in deployment without changing the source file.
 MODEL_PATH = os.getenv("MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV4.pt")
 
-# Ensure the class is available under __main__ for legacy pickles
+# Older pickled checkpoints expect this class to exist under `__main__` during deserialization.
 main_mod = sys.modules.get("__main__")
 if main_mod is not None:
     setattr(main_mod, "SiameseEfficientNet", SiameseEfficientNet)
 
 model = None
 try:
-    # Load the pickled model (the file contains the class object)
+    # The current checkpoint stores a serialized model object rather than just a state dict.
     model = torch.load(MODEL_PATH, map_location=torch.device("cpu"), weights_only=False)
     if hasattr(model, "eval"):
         model.eval()
@@ -72,13 +72,13 @@ except Exception as e:
 def predict_result_by_image(predict_request: PredictRequest):
     results = []
 
-    # Iterate through each pair in the request
+    # Process each pair independently so results stay aligned with the incoming request order.
     for pair in predict_request.pair_list:
         pair_id = pair.pair_id
         screenshots = pair.image_list
 
         if predict_request.type == 1:
-            # Save uploaded screenshots
+            # Type 1 requests send raw image payloads that must be persisted before inference.
             saved_paths = save_screenshots(predict_request.user_id, pair_id, screenshots)
             img1_path = saved_paths[0].image_path
             img2_path = saved_paths[1].image_path
@@ -137,15 +137,14 @@ def save_screenshots(user_id: int, pair_id: int, screenshots: list[ScreenshotMet
 
     for snack in screenshots:
         try:
-            # Decode the base64 image
+            # Store each uploaded screenshot under a stable user/pair folder for later reuse.
             img_data = base64.b64decode(snack.image_base64.split(",")[-1])
             file_path = upload_dir / f"{snack.image_name}"
 
-            # Save the file to disk
             with open(file_path, "wb") as f:
                 f.write(img_data)
 
-            # Convert Path object to string
+            # Return both a filesystem path and a static URL so downstream code can render the image.
             path_string = file_path.as_posix()
             file_url = f"{base_url}/{user_id}/{pair_id}/{snack.image_name}"
 
@@ -169,6 +168,7 @@ def _save_inline_image_if_needed(user_id: int, pair_id: int, image_name: str, im
     If input is already a valid path, returns it directly.
     """
     if os.path.exists(image_base64_or_path):
+        # Reuse an existing saved file when the caller already passed a path instead of inline base64.
         return image_base64_or_path
 
     upload_dir = Path(f"upload_image/{user_id}/{pair_id}")
@@ -187,7 +187,7 @@ def predict_ui_bug(img1_path, img2_path, model):
         return {"error": "Model not loaded"}
 
     try:
-        # 1. Load with PIL and convert to RGB
+        # PIL keeps image decoding simple before albumentations converts the data to tensors.
         img1_pil = Image.open(img1_path).convert("RGB")
         img2_pil = Image.open(img2_path).convert("RGB")
     except Exception as e:
@@ -195,7 +195,7 @@ def predict_ui_bug(img1_path, img2_path, model):
         return {"error": "Error loading images"}
 
     try:
-        # 2. Preprocess images to tensors
+        # Both screenshots are normalized into the same tensor shape before inference.
         img1_tensor = preprocess_infer(img1_pil).unsqueeze(0).to(torch.device("cpu"))
         img2_tensor = preprocess_infer(img2_pil).unsqueeze(0).to(torch.device("cpu"))
     except Exception as e:
@@ -229,9 +229,9 @@ def predict_ui_bug(img1_path, img2_path, model):
 
 
 transform = A.Compose([
-    # Resize so the longest side is 512, keeping the aspect ratio
+    # Resize preserves aspect ratio before padding to the square input expected by the model.
     A.LongestMaxSize(max_size=512),
-    # Add padding to reach exactly 512x512
+    # Padding avoids stretching screenshots that are not already square.
     A.PadIfNeeded(min_height=512, min_width=512, border_mode=0),
     A.Normalize(),
     ToTensorV2()

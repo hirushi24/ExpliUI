@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, Any
 
+# Shared request and response models for upload, URL capture, and comparison endpoints.
 class ScreenshotMetaData(BaseModel):
     image_id: int
     image_name: str

@@ -1,3 +1,4 @@
+// Result models used by the results page, evidence modal, and export features.
 export interface DetectedIssue {
   id: string;
   pair_id?: number;

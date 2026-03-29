@@ -4,6 +4,7 @@ import { ArrowLeft, Play } from "lucide-react";
 import { Button } from "../components/common/Button";
 import { uploadApi } from "../api/clients"; 
 
+// Preview step for URL-captured screenshots before they are sent into the comparison pipeline.
 export default function UrlPreviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,7 +15,7 @@ export default function UrlPreviewPage() {
   const sessionId = state?.sessionId || "demo"; 
   const pairId = state?.pairId || 1;
 
-  // from UrlEnterPage navigate()
+  // State is passed from the URL capture step, but fallbacks keep the screen usable after refreshes.
   const captured = state?.captured || null;
   const results = captured?.results || [];
 
@@ -65,8 +66,7 @@ const handleStartAnalysis = async () => {
     let base64A = "";
     let base64B = "";
 
-    // Optimization: If we have image_name, the backend already has the file.
-    // We only need to convert to base64 if we DON'T have a server-side filename.
+    // Reuse server-side files when possible to avoid fetching and re-encoding captured screenshots in the browser.
     if (!imgA?.image_name || !imgB?.image_name) {
       const [b64A, b64B] = await Promise.all([
         imageUrlToBase64(screenshotAUrl),
@@ -110,6 +110,7 @@ const handleStartAnalysis = async () => {
     });
 
     navigate("/results/demo", {
+      // Wrap the single pair in an array so the results page can reuse the same normalization path as uploads.
       state: {
         pairs: [
           {

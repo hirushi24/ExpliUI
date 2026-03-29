@@ -12,6 +12,7 @@ import {
 import type { ScreenshotPair, EnvironmentMetadata, ComparisonMode } from "../../types";
 import { EnvironmentSelector } from "./EnvironmentSelector";
 
+// Main upload workspace for one pair: file intake, optional cropping, metadata sync, and confirmation.
 interface Props {
   pair: ScreenshotPair;
   onUpload: (side: "A" | "B", file: File) => void;
@@ -36,6 +37,7 @@ type PendingCrop = {
 };
 
 function isMetaComplete(m: EnvironmentMetadata) {
+  // A pair is only submittable once all environment fields are fully specified.
   if (!m.deviceType) return false;
   if (!m.os) return false;
   if (!m.browser) return false;
@@ -87,6 +89,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 }
 
 async function createCroppedFile(file: File, crop: CropRect): Promise<File> {
+  // Cropping happens client-side so uploads only include the final region the user wants compared.
   const img = await loadImage(file);
 
   const sx = Math.round((crop.xPct / 100) * img.naturalWidth);
@@ -174,6 +177,7 @@ export function PairUploadPanel({
       const isLandscape = width >= height;
       const isPortrait = height > width;
 
+      // Orientation is used as a lightweight guardrail for desktop vs mobile screenshot selection.
       if (pair.comparisonMode === "desktop-desktop" && !isLandscape) {
         showToast("Desktop vs Desktop only allows desktop screenshots.");
         e.target.value = "";
@@ -230,6 +234,7 @@ export function PairUploadPanel({
   useEffect(() => {
     if (!pair.comparisonMode) return;
 
+    // Comparison mode hard-locks the allowed device type for both screenshots.
     if (pair.comparisonMode === "desktop-desktop") {
       if (pair.metaA.deviceType !== "desktop") onMetaChange("A", "deviceType", "desktop");
       if (pair.metaB.deviceType !== "desktop") onMetaChange("B", "deviceType", "desktop");
@@ -250,6 +255,7 @@ export function PairUploadPanel({
     const aOs = pair.metaA.os || "";
     const aModel = pair.metaA.deviceModel || "";
 
+    // Environment B mirrors the baseline's device and OS so only the browser can intentionally differ.
     if (pair.metaB.deviceType !== aType) onMetaChange("B", "deviceType", aType);
     if (pair.metaB.os !== aOs) onMetaChange("B", "os", aOs);
 
@@ -578,6 +584,7 @@ function CropModal({
   const MIN_SIZE_PCT = 5;
 
   const getImageBoundsInFrame = () => {
+    // The image may be letterboxed inside the frame, so crop math uses the rendered image bounds instead of the modal.
     const frameEl = frameRef.current;
     if (!frameEl) return { x: 0, y: 0, width: 1, height: 1 };
 
@@ -606,6 +613,7 @@ function CropModal({
   };
 
   const clampCrop = (next: CropRect): CropRect => {
+    // Keep the crop box within the image and prevent it from collapsing too small to be useful.
     const clamped: CropRect = {
       xPct: Math.max(0, Math.min(100, next.xPct)),
       yPct: Math.max(0, Math.min(100, next.yPct)),
@@ -650,6 +658,7 @@ function CropModal({
       const { type, startCrop } = dragRef.current;
       const next: CropRect = { ...startCrop };
 
+      // Dragging updates crop percentages so the same logic works regardless of the image's display size.
       if (type === "move") {
         next.xPct = startCrop.xPct + deltaXPct;
         next.yPct = startCrop.yPct + deltaYPct;

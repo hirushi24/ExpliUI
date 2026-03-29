@@ -12,6 +12,7 @@ from ultralytics import YOLO
 # Load variables from a .env file if it exists
 load_dotenv()
 
+# YOLO-based element detection pipeline used by the earlier prediction endpoint.
 def detect_elements(predict_request: PredictRequest):
     
     BEST_MODEL_PATH = os.getenv("UI_MODEL_PATH", "C:/Users/Hirushi Silva/Documents/Main/ExpliUI/backendV2/modelV2.pt")
@@ -25,12 +26,12 @@ def detect_elements(predict_request: PredictRequest):
 
     results = []
 
-    # Iterate through each pair in the request
+    # Each pair is saved and analyzed independently so the response can stay grouped by pair id.
     for pair in predict_request.pair_list:
         pair_id = pair.pair_id
         screenshots = pair.image_list
         
-        # Save the screenshots and get their file paths
+        # Persist the uploaded screenshots before running detection and OCR.
         saved_paths = save_screenshots(predict_request.user_id, pair_id, screenshots)
         
         img1_path = saved_paths[0].image_path # base image path
@@ -55,6 +56,7 @@ def detect_elements(predict_request: PredictRequest):
 
 
 def get_ui_elements(img1_path, img2_path, model):
+    # Return detections in a baseline-vs-candidate structure that mirrors the comparison UI.
     elements_img1 = detect_ui_elements(img1_path, model)
     elements_img2 = detect_ui_elements(img2_path, model)
 
@@ -72,15 +74,14 @@ def save_screenshots(user_id: int, pair_id: int, screenshots: list[ScreenshotMet
 
     for snack in screenshots:
         try:
-            # Decode the base64 image
+            # Uploaded screenshots are written under a stable pair folder so static URLs remain predictable.
             img_data = base64.b64decode(snack.image_base64.split(",")[-1])
             file_path = upload_dir / f"{snack.image_name}"
             
-            # Save the file to disk
             with open(file_path, "wb") as f:
                 f.write(img_data)
             
-            # Convert Path object to a string for Pydantic validation
+            # Pydantic expects a plain string path in the response model.
             path_string = file_path.as_posix() 
             
             file_url = f"{base_url}/{user_id}/{pair_id}/{snack.image_name}"
@@ -124,6 +125,7 @@ def detect_ui_elements(image_path, model, conf_threshold=0.25,
             text = ''
             if extract_text:
                 try:
+                    # OCR is scoped to each detection box so text stays tied to the correct UI element.
                     img = cv2.imread(image_path)
                     crop = img[max(0,y1):y2, max(0,x1):x2]
                     if crop.size > 0:

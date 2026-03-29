@@ -52,6 +52,7 @@ const MOBILE_BROWSERS_BY_OS: Record<string, { value: string; label: string }[]> 
 };
 
 function normalize(v?: string) {
+  // Normalize dropdown values so comparisons stay stable even if labels vary in casing.
   return (v || "").trim().toLowerCase();
 }
 
@@ -80,7 +81,7 @@ export function EnvironmentSelector({
       ? MOBILE_OS
       : DESKTOP_OS;
 
-  // For browser options, in Test(B) we use baseline OS (because B is locked to A)
+  // The test-side browser list is derived from the baseline OS because the two screenshots must stay comparable.
   const effectiveOsForBrowser = isTest ? baselineOs : osValue;
 
   const browserOptions =
@@ -88,9 +89,7 @@ export function EnvironmentSelector({
       ? MOBILE_BROWSERS_BY_OS[effectiveOsForBrowser] || []
       : DESKTOP_BROWSERS_BY_OS[effectiveOsForBrowser] || [];
 
-  // Browser disabled until OS chosen:
-  // - baseline: needs its own OS
-  // - test: needs baseline OS
+  // Browser choice stays disabled until the relevant OS is known.
   const browserDisabled =
     !!disabled || (isTest ? !baselineOs : !osValue);
 

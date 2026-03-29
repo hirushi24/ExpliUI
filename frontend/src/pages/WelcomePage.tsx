@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Marketing-style landing page that directs users into the dashboard workflow.
 export default function WelcomePage() {
   const navigate = useNavigate();
 

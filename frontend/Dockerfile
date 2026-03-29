@@ -1,3 +1,4 @@
+# Multi-stage container build for the Vite frontend and its Nginx runtime.
 # Build stage
 FROM node:20-slim AS build
 

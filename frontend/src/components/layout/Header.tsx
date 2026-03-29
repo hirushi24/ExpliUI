@@ -1,6 +1,7 @@
 import { LayoutGrid, History } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
+// Minimal top navigation used across the app shell.
 export function Header() {
   const location = useLocation();
 

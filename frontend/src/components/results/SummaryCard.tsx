@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle, X } from "lucide-react";
 import type { TestResults } from "../../types/Results";
 
+// Results summary card with modal drill-downs for the affected and passing pair previews.
 interface PairPreview {
   pairId: string;
   imageA: string;
@@ -25,6 +26,7 @@ export function SummaryCard({
   pairsWithIssues = [],
   pairsWithoutIssues = [],
 }: Props) {
+  // The modal reuses the pair preview data already assembled by the results page.
   const [modalState, setModalState] = useState<{
     open: boolean;
     title: string;
@@ -153,6 +155,7 @@ function isNumericPairId(value: string) {
 }
 
 function shouldUseOneBasedLabels(pairs: PairPreview[]) {
+  // Some flows store pair ids starting at zero, but the UI should usually label them starting at 1.
   if (pairs.length === 0) return false;
   const numericIds = pairs.map((pair) => pair.pairId).filter(isNumericPairId).map(Number);
   return numericIds.length > 0 && Math.min(...numericIds) === 0;
@@ -205,6 +208,7 @@ function PairListModal({
   useEffect(() => {
     if (!open) return;
 
+    // Allow keyboard dismissal so large preview lists feel like a real modal, not a static overlay.
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();

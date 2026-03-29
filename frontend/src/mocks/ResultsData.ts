@@ -1,5 +1,6 @@
 import type { TestResults } from "../types/Results";
 
+// Mock results keep the results page testable before real backend data is available.
 export const mockResults: TestResults = {
   session_id: "sess_abc123",
   test_type: "upload",

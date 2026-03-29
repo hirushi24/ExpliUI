@@ -15,6 +15,7 @@ interface Props {
   pairsWithoutIssues?: PairPreview[];
 }
 
+// Export helpers support JSON download and a frontend-generated PDF fallback when the backend export route is absent.
 const PDF_PAGE_WIDTH = 595;
 const PDF_PAGE_HEIGHT = 842;
 const PDF_MARGIN = 40;
@@ -116,6 +117,7 @@ const loadImageAsJpeg = async (url?: string): Promise<EmbeddedImage | null> => {
   if (!url) return null;
 
   try {
+    // Re-encode to JPEG so embedded images stay small enough for a browser-built PDF.
     const response = await fetch(url);
     if (!response.ok) return null;
 
@@ -188,6 +190,7 @@ const buildPdfBlob = async (
   pairsWithIssues: PairPreview[],
   pairsWithoutIssues: PairPreview[]
 ) => {
+  // Build a lightweight PDF manually so exports still work without a PDF library dependency.
   type ImageUsage = {
     name: string;
     image: EmbeddedImage;
@@ -202,6 +205,7 @@ const buildPdfBlob = async (
   const issueByPair = new Map<string, DetectedIssue[]>();
 
   results.issues.forEach((issue) => {
+    // Group issues by pair so the report can present one concise section per screenshot pair.
     const pairId = getPairIdFromIssue(issue as any);
     const existing = issueByPair.get(pairId) || [];
     existing.push(issue);
@@ -220,6 +224,7 @@ const buildPdfBlob = async (
   let state = startPage();
 
   const ensureSpace = (requiredHeight: number) => {
+    // Start a new PDF page whenever the next section would overflow the printable area.
     if (state.y - requiredHeight < PDF_MARGIN) {
       state = startPage();
     }
@@ -531,6 +536,7 @@ export function ExportPanel({
     setExporting("pdf");
 
     try {
+      // Prefer a server-generated PDF when available, but silently fall back to the frontend builder.
       const response = await fetch(`/api/export/pdf`);
       if (!response.ok) throw new Error(`PDF export failed with status ${response.status}`);
 
@@ -554,6 +560,7 @@ export function ExportPanel({
   };
 
   const handleExportJSON = () => {
+    // JSON export preserves the raw structured result for debugging or later processing.
     const dataStr = JSON.stringify(results, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     downloadBlob(dataBlob, `expliui-data.json`);

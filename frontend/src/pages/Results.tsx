@@ -8,6 +8,7 @@ import type { TestResults, DetectedIssue } from "../types/Results";
 import { mockResults } from "../mocks/ResultsData.ts";
 import { ChevronDown, ChevronRight, Eye, Loader2, ArrowLeft } from "lucide-react";
 
+// Results page that normalizes multiple backend response shapes into one UI-friendly issue model.
 
 const RULE_BASED_SEVERITIES = ["critical", "high", "medium", "low"] as const;
 
@@ -50,7 +51,7 @@ const toAbsoluteMediaUrl = (rawUrl?: string) => {
 
   const normalized = rawUrl.replaceAll("\\", "/");
 
-  // backend may return local file path like: upload_image\\20256\\1\\img_A.png
+  // The backend sometimes returns filesystem-style paths, so convert them into static asset URLs.
   if (normalized.startsWith("upload_image/")) {
     const staticPath = normalized.replace(/^upload_image\//, "/static/");
     return BACKEND_STATIC_ORIGIN ? `${BACKEND_STATIC_ORIGIN}${staticPath}` : staticPath;
@@ -92,9 +93,7 @@ export default function Results() {
   const pairsFromState = state?.pairs || [];
   const uploadResponseFromState = state?.uploadResponse || null;
 
-  // Normalize predictions to a flat list.
-  // In some flows (batched uploads), `uploadResponse.results` can be an array of arrays,
-  // which made the final step think there were no issues.
+  // Batched uploads can produce nested result arrays, so flatten them before building the final summary.
   const predictionList = useMemo(() => {
     const rawResults = uploadResponseFromState?.results;
 
@@ -135,7 +134,7 @@ export default function Results() {
 }, [sessionId]);
 
 
-// Helper: normalize a candidate pair id value to a string key
+// Normalize any backend pair identifier shape into a stable string key for grouping.
 const normalizePairId = (raw: any) => {
   if (raw === null || raw === undefined) return "unknown";
   if (typeof raw === "number") return String(raw);
@@ -143,7 +142,7 @@ const normalizePairId = (raw: any) => {
     const numericMatch = raw.match(/\d+/);
     return numericMatch ? numericMatch[0] : raw;
   }
-  // try common fields on objects
+  // Support multiple backend field names because pair ids are not yet fully standardized.
   if (typeof raw === "object") {
     const objectId = raw.pair_id ?? raw.pairId ?? raw.id ?? raw.pair;
     if (objectId !== null && objectId !== undefined) {
@@ -160,6 +159,7 @@ const normalizePairIdWithIndexFallback = (raw: any, index: number) => {
   return normalized === "unknown" ? String(index) : normalized;
 };
 
+// Build the full known pair set from the most reliable source available so "no issues" counts stay accurate.
 /**
  * Build canonicalAllPairs: a Set of unique pair ids for all pairs we know about.
  * Sources (in preference):
@@ -209,7 +209,7 @@ const canonicalAllPairs = useMemo(() => {
   return set;
 }, [predictionList, pairsFromState, results?.summary?.total_pairs]);
 
-// Unique pair ids that have >=1 issue (derived from results.issues)
+// Track which of the known pairs produced at least one issue in the normalized results.
 const pairsWithIssuesSet = useMemo(() => {
   const s = new Set<string>();
   if (!Array.isArray(results?.issues) || results.issues.length === 0) return s;
@@ -227,7 +227,7 @@ const pairsWithIssuesSet = useMemo(() => {
   return s;
 }, [results?.issues]);
 
-// Counts
+// Derive pair counts from the normalized sets instead of trusting every backend summary field directly.
 const allPairsCount = canonicalAllPairs.size;
 const pairsWithIssuesCount = pairsWithIssuesSet.size;
 
@@ -312,13 +312,14 @@ const fetchResults = async () => {
     setLoading(true);
     setError(null);
 
-    // If backend response in state, use it instead of mock
+    // Prefer navigation state from the live workflow before falling back to static mock data.
     if (predictionList.length > 0) {
       const hasRuleBasedOutput = predictionList.some(
         (x: any) => x?.issues !== undefined || x?.matching || x?.summary || x?.affected_css_properties
       );
 
       if (hasRuleBasedOutput) {
+        // Rule-based output is already close to the final UI shape, but still needs pair-level normalization.
         const issues = predictionList.flatMap((pair: any, pairIndex: number) => {
           // const toDetectedIssue = (issue: any, index: number): DetectedIssue => {
           //   const bbox = issue?.bbox_baseline || [0, 0, 0, 0];
@@ -451,6 +452,7 @@ const fetchResults = async () => {
       const issuesDetected = bugItems.length;
       const noIssues = totalPairs - issuesDetected;
 
+      // Older ML-only responses infer severity from probability because they do not return explicit severity.
       const severityFromProb = (p: number) => {
         if (p >= 0.75) return "high";
         if (p >= 0.45) return "medium";
@@ -493,7 +495,7 @@ const fetchResults = async () => {
       return; 
     }
 
-    // Fallback to mock only if no state results
+    // Mock data keeps the page previewable when opened directly without navigation state.
     await new Promise((resolve) => setTimeout(resolve, 500));
     setResults(mockResults);
 

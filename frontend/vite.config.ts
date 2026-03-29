@@ -10,7 +10,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
+// Vite dev server proxies frontend requests to the FastAPI backend during local development.
 export default defineConfig({
   plugins: [react()],
   server: {

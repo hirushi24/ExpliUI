@@ -19,6 +19,7 @@ const MAC_BROWSERS = [
 ];
 
 function normalizeHttpUrl(value: string) {
+  // Accept bare domains in the input field by defaulting them to https.
   const trimmed = value.trim();
   if (!trimmed) return "";
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
@@ -38,7 +39,7 @@ export default function UrlEnterPage() {
 
   const [url, setUrl] = useState("");
 
-  // user OS selection
+  // URL capture currently supports desktop comparisons on one selected OS at a time.
   const [selectedOS, setSelectedOS] = useState<SelectedOS>("");
 
   // Desktop meta (A & B)
@@ -55,14 +56,14 @@ export default function UrlEnterPage() {
   // Environments enabled only when URL valid + OS selected
   const envEnabled = urlOk && !!selectedOS;
 
-  // browsers depend on OS
+  // Browser choices are constrained by OS to avoid impossible environment combinations.
   const availableBrowsers = useMemo(() => {
     if (selectedOS === "windows") return WINDOWS_BROWSERS;
     if (selectedOS === "macos") return MAC_BROWSERS;
     return [];
   }, [selectedOS]);
 
-  // when OS changes, reset browsers (important)
+  // Reset browser selections when the OS changes so stale combinations are not submitted.
   useEffect(() => {
     setBrowserA("");
     setBrowserB("");
@@ -89,6 +90,7 @@ export default function UrlEnterPage() {
 
       const pairId = generatePairId();
 
+      // The backend captures both requested environments and stores the resulting screenshots on the server.
       const payload = {
         user_id: Number(localStorage.getItem("Id")),
         pair_id: pairId,

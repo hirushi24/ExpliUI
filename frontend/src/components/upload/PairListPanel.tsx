@@ -19,6 +19,7 @@ export function PairListPanel({ pairs, activePairId, onSelect, onAdd }: Props) {
 
       <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-slate-800">
         {pairs.map((pair, index) => (
+          // The sidebar doubles as both navigation and a quick status view for each pair.
           <button
             key={pair.id}
             onClick={() => onSelect(pair.id)}

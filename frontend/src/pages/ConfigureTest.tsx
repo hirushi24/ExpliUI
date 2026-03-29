@@ -2,11 +2,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button";
 import { CheckCircle2, Clock, Layers, Play, ShieldCheck } from "lucide-react";
 
+// Review step between upload and results, using navigation state from the upload flow.
 export default function ConfigureTest() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const state = location.state as any;
+  // The page is intentionally tolerant of missing state so users can still recover if they refresh.
   const pairs = state?.pairs || [];
   const uploadResponse = state?.uploadResponse || null;
 

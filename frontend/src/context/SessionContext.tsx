@@ -10,6 +10,7 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
+  // Persist the active session id locally so refreshes do not immediately drop the current workspace state.
   const [sessionId, setSessionId] = useState<string | null>(() => {
     return localStorage.getItem("expliui_session");
   });
@@ -19,6 +20,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const initSession = async () => {
     setIsLoading(true);
     try { 
+      // Session creation is delegated to the backend so later test results can be grouped consistently.
       const res = await api.post("/create_test"); 
       
       const newId = res.data.session_id;
@@ -42,6 +44,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 export const useSession = () => {
   const context = useContext(SessionContext);
+  // Fail fast if a consumer is rendered outside the provider tree.
   if (!context) throw new Error("useSession must be used within SessionProvider");
   return context;
 };

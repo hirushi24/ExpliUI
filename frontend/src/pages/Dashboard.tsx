@@ -1,12 +1,14 @@
 import { ArrowRight, CheckCircle2, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Dashboard entry page that creates lightweight local ids before starting a new workflow.
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const generateFiveDigitId = () => Math.floor(10000 + Math.random() * 90000);
 
   const handleStart = (path: string) => {
+    // These local ids are used throughout the current flow to group uploads and results.
     const userId = generateFiveDigitId();
     const sessionId = generateFiveDigitId();
 

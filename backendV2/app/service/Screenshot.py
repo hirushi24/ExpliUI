@@ -19,6 +19,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 
 from app.modal import PredictRequestByUrl, savedPairPaths
 
+# Browser automation helpers for capturing full-page screenshots from a live URL.
 
 def _base_headless_args(options, browser: str):
     """
@@ -105,9 +106,10 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
             lambda d: d.execute_script("return document.readyState") == "complete"
         )
 
+        # Give late layout work a moment to settle before measuring and capturing the page.
         time.sleep(0.7)
 
-        # Get full page dimensions
+        # Measure the full scrollable document so the saved image includes off-screen content.
         total_width = driver.execute_script(
             "return Math.max(document.body.scrollWidth, "
             "document.documentElement.scrollWidth, 1920)"
@@ -122,7 +124,7 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
             time.sleep(0.3)
 
             try:
-                # Try CDP full-page screenshot first
+                # Chromium browsers usually give the best full-page result through CDP capture.
                 result = driver.execute_cdp_cmd("Page.captureScreenshot", {
                     "format": "png",
                     "captureBeyondViewport": True,
@@ -139,19 +141,19 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
 
             except Exception as cdp_err:
                 print(f"[!] CDP screenshot failed, falling back to regular screenshot: {cdp_err}")
-                # Fallback: use regular screenshot with the resized window
+                # Fall back to a normal screenshot if CDP capture is unavailable in this runtime.
                 ok = driver.save_screenshot(str(save_path))
                 if not ok:
                     raise RuntimeError("save_screenshot returned False.")
 
         elif browser_name == "firefox":
-            # Firefox supports full-page screenshot natively
+            # Firefox exposes its own native full-page screenshot API.
             driver.set_window_size(total_width, total_height)
             time.sleep(0.3)
             driver.save_full_page_screenshot(str(save_path))
 
         else:
-            # Fallback: resize window to full page height and take normal screenshot
+            # Non-Chromium fallback still benefits from resizing to the full document first.
             driver.set_window_size(total_width, total_height)
             time.sleep(0.3)
             ok = driver.save_screenshot(str(save_path))
@@ -171,7 +173,7 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
 def capture(req: PredictRequestByUrl):
     upload_dir = Path(f"upload_image/{req.user_id}/{req.pair_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
-    # Use relative path so the frontend resolves it correctly in both local and deployment
+    # Relative static URLs work both in local development and behind a reverse proxy.
     base_url = "/static"
 
     saved_paths = []
@@ -183,6 +185,7 @@ def capture(req: PredictRequestByUrl):
         file_path = upload_dir / file_name
 
         try:
+            # Save one screenshot per requested browser/OS environment under the current pair folder.
             capture_full_page(
                 url=req.image_url,
                 browser_name=pair.browser,

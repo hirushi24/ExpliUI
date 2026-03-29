@@ -9,6 +9,7 @@ import Results from "../pages/Results";
 import ConfigureTest from "../pages/ConfigureTest";
 import UrlPreviewPage from "../pages/UrlPreviewPage";
 
+// Central route map for the guided test creation and results review flows.
 export default function AppRouter() {
   return (
     <div className="min-h-screen bg-background font-sans">

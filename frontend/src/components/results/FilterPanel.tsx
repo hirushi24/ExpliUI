@@ -33,7 +33,7 @@ export function FilterPanel({
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Severity Filter */}
+          {/* Filtering is currently severity-first even though the props still expose category/sort hooks. */}
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-slate-700">Severity:</label>
             <select

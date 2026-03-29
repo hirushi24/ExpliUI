@@ -1,3 +1,4 @@
+# Container image for the FastAPI backend, including OCR, OpenCV, and browser automation dependencies.
 # Use an official Python runtime as a parent image
 FROM python:3.10-slim
 

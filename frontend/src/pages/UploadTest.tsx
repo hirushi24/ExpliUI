@@ -1,5 +1,4 @@
 import { useState } from "react";
-// import { toast, Toaster } from "react-hot-toast";
 import { PairListPanel } from "../components/upload/PairListPanel";
 import { PairUploadPanel } from "../components/upload/PairUploadPanel";
 import type { ScreenshotPair, EnvironmentMetadata } from "../types";
@@ -10,6 +9,7 @@ import { fileToBase64 } from "../utils/fileUtils";
 import AnalysisProgressScreen from "../components/upload/AnalysisProgressScreen";
 
 const DEFAULT_META: EnvironmentMetadata = {
+  // Default blank metadata keeps newly-added pairs valid before the user fills in environment details.
   deviceType: "desktop",
   browser: "",
   os: "",
@@ -30,12 +30,11 @@ const postCompareRuleBasedWithRetry = async (payload: any, retries = 2) => {
       const retryAfterSeconds = Number(retryAfterHeader);
       const shouldRetry = status === 429 || status === 500;
 
-      // If this is the final attempt and it still failed, show the toast
+      // Let temporary rate-limit or server-capacity spikes settle before failing the whole batch.
       if (attempt === retries) {
-        throw error; // Still throw the error so the calling function knows it failed
+        throw error;
       }
 
-      // If we shouldn't retry (e.g., a 400 or 401 error), throw immediately
       if (!shouldRetry) throw error;
 
       const backoffMs = Number.isFinite(retryAfterSeconds)
@@ -72,6 +71,7 @@ export default function UploadTest() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // The right-hand panel always edits the currently selected pair from the left sidebar.
   const activePair = pairs.find((p) => p.id === activeId)!;
 
   const handleAddPair = () => {
@@ -94,7 +94,7 @@ export default function UploadTest() {
     setActiveId(newId);
   };
 
-  // force deviceType based on selected comparison mode
+  // Keep metadata aligned with the comparison mode so desktop/mobile requests stay internally consistent.
   const handleComparisonModeChange = (mode: ScreenshotPair["comparisonMode"]) => {
     const forcedDeviceType = mode === "mobile-mobile" ? "mobile" : "desktop";
 
@@ -135,6 +135,7 @@ export default function UploadTest() {
     setPairs(
       pairs.map((p) => {
         if (p.id === activeId) {
+          // Update the chosen side in place and recalculate readiness once both files exist.
           const updated: any = {
             ...p,
             [`file${side}`]: file,
@@ -171,7 +172,8 @@ export default function UploadTest() {
     );
   };
 
-   const confirmedReadyPairs = pairs.filter((p) => p.status === "ready" && p.stage === "confirmed");
+  // Submission only includes pairs the user explicitly confirmed after both screenshots were provided.
+  const confirmedReadyPairs = pairs.filter((p) => p.status === "ready" && p.stage === "confirmed");
   const hasInProgressPairs = pairs.some((p) => {
     const hasAnyUploads = Boolean(p.fileA || p.fileB || p.previewA || p.previewB);
     return hasAnyUploads && (p.status !== "ready" || p.stage !== "confirmed");
@@ -197,6 +199,7 @@ export default function UploadTest() {
         const pair = confirmedReadyPairs[i];
         if (!pair.fileA || !pair.fileB) continue;
 
+        // The backend accepts screenshots as JSON payloads, so files are converted to base64 before upload.
         const base64A = await fileToBase64(pair.fileA);
         const base64B = await fileToBase64(pair.fileB);
 
@@ -223,6 +226,7 @@ export default function UploadTest() {
 
         const response = await postCompareRuleBasedWithRetry(payload);
         results.push(response.data?.results);
+        // Progress is tracked per confirmed pair because each request is processed sequentially.
         setUploadProgress(((i + 1) / confirmedReadyPairs.length) * 100);
 
         if (i < confirmedReadyPairs.length - 1) {
@@ -246,12 +250,6 @@ export default function UploadTest() {
       });
     } catch (error: any) {
       console.error("Upload error:", error);
-      // const status = error?.response?.status;
-      // const details = error?.response?.data?.detail || error?.response?.data?.message || error.message;
-      // const hint = status === 429
-      //   ? "Server is rate-limiting requests. Please retry in a few seconds."
-      //   : "If this keeps happening, check backend logs/CORS config.";
-      // toast.error("Resources insufficient please try again later with less pairs");
       setErrorMessage("Resources insufficient please try again later");
     } finally {
       setIsUploading(false);

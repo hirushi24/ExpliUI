@@ -2,6 +2,7 @@ import { AlertCircle, Code, Lightbulb, ExternalLink, Eye } from "lucide-react";
 import type { DetectedIssue } from "../../types/Results";
 import { clsx } from "clsx";
 
+// Reusable card layout for displaying one normalized issue object with evidence and suggested fixes.
 interface Props {
   issue: DetectedIssue;
   index: number;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function IssueCard({ issue, index, onViewEvidence }: Props) {
+  // Severity colors are separated so the header badge and body emphasis can evolve independently.
   const severityColors = {
     critical: "bg-red-100 border-red-300 text-red-900",
     high: "bg-red-50 border-red-200 text-red-700",
