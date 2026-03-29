@@ -4,3 +4,13 @@ torch
 torchvision
 albumentations
 timm
+opencv-python
+numpy
+scipy
+scikit-image
+pytesseract
+Pillow
+ultralytics
+selenium
+webdriver-manager
+google-generativeai

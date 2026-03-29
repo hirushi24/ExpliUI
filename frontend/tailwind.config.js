@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  // Scan the app shell and all source files so Tailwind only emits the classes the UI actually uses.
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",

@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { DetectedIssue } from "../../types/Results";
 import { HeatmapOverlay } from "./HeatmapOverlay";
 
+// Side-by-side evidence viewer for one detected issue, including optional heatmap overlay and downloads.
 interface Props {
   issue: DetectedIssue;
   onClose: () => void;
@@ -13,6 +14,7 @@ export function EvidenceModal({ issue, onClose }: Props) {
   const [zoom, setZoom] = useState(1);
 
   const downloadImage = (url: string, filename: string) => {
+    // Trigger a direct browser download so users can attach the raw evidence to bug reports.
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;

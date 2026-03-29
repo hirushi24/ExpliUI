@@ -1,128 +1,4 @@
-# import platform
-# import time
-# from pathlib import Path
-# from selenium import webdriver
-# from selenium.common.exceptions import WebDriverException
-# from selenium.webdriver.chrome.service import Service as ChromeService
-# from selenium.webdriver.chrome.options import Options as ChromeOptions
-# from selenium.webdriver.firefox.service import Service as FirefoxService
-# from selenium.webdriver.firefox.options import Options as FirefoxOptions
-# from selenium.webdriver.edge.service import Service as EdgeService
-# from selenium.webdriver.edge.options import Options as EdgeOptions
-# from webdriver_manager.chrome import ChromeDriverManager
-# from webdriver_manager.firefox import GeckoDriverManager
-# from webdriver_manager.microsoft import EdgeChromiumDriverManager
-
-# from app.modal import PredictRequestByUrl, savedPairPaths
-
-# def get_driver(browser_name):
-#     browser_name = browser_name.lower()
-
-#     if browser_name == "chrome":
-#         options = ChromeOptions()
-#         options.add_argument("--headless")
-#         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-#         return driver
-
-#     if browser_name == "firefox":
-#         options = FirefoxOptions()
-#         options.add_argument("--headless")
-#         try:
-#             driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
-#             return driver
-#         except WebDriverException as e:
-#             # Common issue: Firefox binary not installed or not found
-#             if "Expected browser binary location" in str(e) or "Unable to find" in str(e):
-#                 raise RuntimeError("Firefox binary not found. Install Firefox or set the binary path via 'moz:firefoxOptions.binary'.") from e
-#             raise
-
-#     if browser_name == "edge":
-#         options = EdgeOptions()
-#         options.add_argument("--headless")
-#         driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()), options=options)
-#         return driver
-
-#     if browser_name == "safari":
-#         # Safari's WebDriver (safaridriver) is only available on macOS
-#         driver = webdriver.Safari()
-#         return driver
-
-#     raise ValueError(f"Browser '{browser_name}' not supported on {platform.system()}")
-
-
-
-
-# def capture_full_page(url, browser_name, save_path):
-#     browser_name = browser_name.lower()
-
-#     # Safari only works on macOS
-#     if browser_name == "safari" and platform.system().lower() != "darwin":
-#         raise ValueError("Safari is only supported on macOS")
-
-#     try:
-#         driver = get_driver(browser_name)
-#         driver.get(url)
-#         time.sleep(2)  # wait for page load
-
-#         # Get full page dimensions (use max of body and documentElement for reliability)
-#         # total_width = driver.execute_script(
-#         #     "return Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);"
-#         # )
-#         total_width = 1920
-#         total_height = 1080
-#         # total_height = driver.execute_script(
-#         #     "return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);"
-#         # )
-
-#         # Set window size and capture full page screenshot
-#         driver.set_window_size(total_width, total_height)
-#         time.sleep(1)  # let resize take effect
-
-#         driver.save_screenshot(save_path)
-#         print(f"[✓] Full-page screenshot saved: {save_path}")
-
-#     except Exception as e:
-#         print(f"[x] {browser_name} failed: {e}")
-#     finally:
-#         if 'driver' in locals():
-#             driver.quit()
-
-
-# def capture(req: PredictRequestByUrl):
-#     upload_dir = Path(f"upload_image/{req.user_id}/{req.pair_id}")
-#     upload_dir.mkdir(parents=True, exist_ok=True)
-#     base_url = "http://127.0.0.1:8080/static"
-
-#     saved_paths = []
-
-#     for pair in req.image_list:
-#             timestamp = int(time.time() * 1000)
-#             file_name = f"{pair.os}_{pair.browser}_{timestamp}.png"
-#             file_path = upload_dir / f"{file_name}"
-            
-#             try:
-#                 capture_full_page(
-#                     url=req.image_url,
-#                     browser_name=pair.browser,
-#                     save_path=file_path
-#                 )
-#                 file_url = f"{base_url}/{req.user_id}/{req.pair_id}/{file_name}"
-#                 saved_path = savedPairPaths(
-#                     pair_id=req.pair_id,
-#                     image_name=file_name,
-#                     image_url=file_url,
-#                     browser=pair.browser,
-#                     os=pair.os,
-#                     image_path=file_path.as_posix() )
-                
-#                 saved_paths.append(saved_path)
-#             except Exception as e:
-#                 print(f"Error capturing screenshot for URL {req.image_url} with browser {pair.browser}: {e}")
-
-#     return saved_paths
-
-
-
+import base64
 import platform
 import time
 from pathlib import Path
@@ -130,7 +6,6 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 from selenium.webdriver.firefox.service import Service as FirefoxService
@@ -140,12 +15,11 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 
 from selenium.webdriver.support.ui import WebDriverWait
 
-from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
-# removed EdgeChromiumDriverManager import (no longer needed)
 
 from app.modal import PredictRequestByUrl, savedPairPaths
 
+# Browser automation helpers for capturing full-page screenshots from a live URL.
 
 def _base_headless_args(options, browser: str):
     """
@@ -174,10 +48,12 @@ def get_driver(browser_name: str):
     if browser_name == "chrome":
         options = ChromeOptions()
         _base_headless_args(options, "chrome")
-        return webdriver.Chrome(
-            service=ChromeService(ChromeDriverManager().install()),
-            options=options
-        )
+
+        # In Linux/Docker, Chromium is typically installed at /usr/bin/chromium
+        if platform.system().lower() == "linux":
+            options.binary_location = "/usr/bin/chromium"
+
+        return webdriver.Chrome(options=options)
 
     if browser_name == "firefox":
         options = FirefoxOptions()
@@ -195,17 +71,16 @@ def get_driver(browser_name: str):
             raise
 
     if browser_name == "edge":
-        # ✅ FIX: Use Selenium Manager instead of webdriver_manager for Edge
-        # This prevents the “Could not reach host” download error.
         options = EdgeOptions()
         options.use_chromium = True
         _base_headless_args(options, "edge")
 
-        # Optional automation flags (keep if you want)
+        if platform.system().lower() == "linux":
+            options.binary_location = "/usr/bin/chromium"
+
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
 
-        # ✅ KEY CHANGE: no EdgeService + no EdgeChromiumDriverManager()
         return webdriver.Edge(options=options)
 
     if browser_name == "safari":
@@ -231,19 +106,61 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
             lambda d: d.execute_script("return document.readyState") == "complete"
         )
 
+        # Give late layout work a moment to settle before measuring and capturing the page.
         time.sleep(0.7)
 
-        total_width = 1920
-        total_height = 1080
+        # Measure the full scrollable document so the saved image includes off-screen content.
+        total_width = driver.execute_script(
+            "return Math.max(document.body.scrollWidth, "
+            "document.documentElement.scrollWidth, 1920)"
+        )
+        total_height = driver.execute_script(
+            "return Math.max(document.body.scrollHeight, "
+            "document.documentElement.scrollHeight)"
+        )
 
-        driver.set_window_size(total_width, total_height)
-        time.sleep(0.3)
+        if browser_name in ("chrome", "edge"):
+            driver.set_window_size(total_width, total_height)
+            time.sleep(0.3)
 
-        ok = driver.save_screenshot(str(save_path))
-        if not ok:
-            raise RuntimeError("save_screenshot returned False (screenshot not written).")
+            try:
+                # Chromium browsers usually give the best full-page result through CDP capture.
+                result = driver.execute_cdp_cmd("Page.captureScreenshot", {
+                    "format": "png",
+                    "captureBeyondViewport": True,
+                    "clip": {
+                        "x": 0,
+                        "y": 0,
+                        "width": total_width,
+                        "height": total_height,
+                        "scale": 1
+                    }
+                })
+                with open(str(save_path), "wb") as f:
+                    f.write(base64.b64decode(result["data"]))
 
-        print(f"[✓] Screenshot saved ({browser_name}): {save_path}")
+            except Exception as cdp_err:
+                print(f"[!] CDP screenshot failed, falling back to regular screenshot: {cdp_err}")
+                # Fall back to a normal screenshot if CDP capture is unavailable in this runtime.
+                ok = driver.save_screenshot(str(save_path))
+                if not ok:
+                    raise RuntimeError("save_screenshot returned False.")
+
+        elif browser_name == "firefox":
+            # Firefox exposes its own native full-page screenshot API.
+            driver.set_window_size(total_width, total_height)
+            time.sleep(0.3)
+            driver.save_full_page_screenshot(str(save_path))
+
+        else:
+            # Non-Chromium fallback still benefits from resizing to the full document first.
+            driver.set_window_size(total_width, total_height)
+            time.sleep(0.3)
+            ok = driver.save_screenshot(str(save_path))
+            if not ok:
+                raise RuntimeError("save_screenshot returned False.")
+
+        print(f"[✓] Full-page screenshot saved ({browser_name}): {save_path}")
 
     except Exception as e:
         print(f"[x] {browser_name} failed: {e}")
@@ -256,9 +173,11 @@ def capture_full_page(url: str, browser_name: str, save_path: Path):
 def capture(req: PredictRequestByUrl):
     upload_dir = Path(f"upload_image/{req.user_id}/{req.pair_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
-    base_url = "http://127.0.0.1:8080/static"
+    # Relative static URLs work both in local development and behind a reverse proxy.
+    base_url = "/static"
 
     saved_paths = []
+    errors = []
 
     for pair in req.image_list:
         timestamp = int(time.time() * 1000)
@@ -266,6 +185,7 @@ def capture(req: PredictRequestByUrl):
         file_path = upload_dir / file_name
 
         try:
+            # Save one screenshot per requested browser/OS environment under the current pair folder.
             capture_full_page(
                 url=req.image_url,
                 browser_name=pair.browser,
@@ -286,6 +206,15 @@ def capture(req: PredictRequestByUrl):
             saved_paths.append(saved_path)
 
         except Exception as e:
-            print(f"Error capturing screenshot for URL {req.image_url} with browser {pair.browser}: {e}")
+            error_msg = (
+                f"Error capturing screenshot for URL {req.image_url} "
+                f"with browser {pair.browser}: {e}"
+            )
+            print(error_msg)
+            errors.append(error_msg)
+
+    if errors:
+        raise RuntimeError(" | ".join(errors))
 
     return saved_paths
+

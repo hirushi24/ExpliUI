@@ -3,6 +3,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: ClassValue[]) {
+  // Merge Tailwind classes safely so variants and caller overrides can coexist.
   return twMerge(clsx(inputs));
 }
 
@@ -11,6 +12,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
  
 export function Button({ className, variant = "primary", ...props }: ButtonProps) {
+  // Shared button primitive keeps the primary/secondary action styling consistent across pages.
   const variants = {
     primary: "bg-primary text-white hover:bg-blue-700",
     secondary: "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50",

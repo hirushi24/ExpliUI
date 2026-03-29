@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+upload_image/
+.git/
+.gitignore
+Dockerfile
+docker-compose.yml
+# *.pt (Removed from ignore as models are needed for YOLO)
+# *.onnx
+# *.engine

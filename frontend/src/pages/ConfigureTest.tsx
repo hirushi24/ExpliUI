@@ -1,258 +1,21 @@
-// import { useLocation, useNavigate } from "react-router-dom";
-// import { Button } from "../components/common/Button";
-
-// export default function ConfigureTest() {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-
-//   // Data passed from UploadTest or UrlTest
-//   const state = location.state as any;
-
-//   const pairs = state?.pairs || [];
-//   const uploadResponse = state?.uploadResponse || null;
-
-//   return (
-//     <div className="max-w-5xl mx-auto p-8">
-
-//       <h1 className="text-2xl font-bold mb-2">
-//         Configure Comparison
-//       </h1>
-
-//       <p className="text-slate-500 mb-6">
-//         Review detected environments and select comparison mode.
-//       </p>
-
-//       {/* Summary Panel */}
-//       <div className="bg-white border rounded-lg p-4 mb-6">
-//         <h3 className="font-semibold mb-2">Session Summary</h3>
-
-//         <p>Total Pairs: {pairs.length}</p>
-
-//         {uploadResponse && (
-//           <p className="text-green-600">
-//             Mock analysis data loaded ✔
-//           </p>
-//         )}
-//       </div>
-
-//       Comparison Mode Selection
-//       <div className="bg-white border rounded-lg p-4 mb-6">
-//         <h3 className="font-semibold mb-3">
-//           Comparison Mode
-//         </h3>
-
-//         <div className="space-y-2">
-//           <label className="flex gap-2">
-//             <input type="radio" name="mode" />
-//             Desktop vs Desktop
-//           </label>
-
-//           <label className="flex gap-2">
-//             <input type="radio" name="mode" />
-//             Mobile vs Mobile
-//           </label>
-
-//           <label className="flex gap-2">
-//             <input type="radio" name="mode" />
-//             Desktop vs Mobile
-//           </label>
-//         </div>
-//       </div>
-
-//       {/* Action Buttons */}
-//       <div className="flex justify-end gap-4">
-//         <Button
-//           variant="secondary"
-//           onClick={() => navigate(-1)}
-//         >
-//           Back
-//         </Button>
-
-//         <Button
-//           onClick={() => navigate("/results/demo")}
-//         >
-//           Start Analysis
-//         </Button>
-//       </div>
-
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-// import { useLocation, useNavigate } from "react-router-dom";
-// import { Button } from "../components/common/Button";
-
-// export default function ConfigureTest() {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-
-//   const state = location.state as any;
-//   const pairs = state?.pairs || [];
-//   const uploadResponse = state?.uploadResponse || null;
-
-//   return (
-//     <div className="bg-slate-50 min-h-[calc(100vh-64px)]">
-//       <div className="max-w-5xl mx-auto p-8">
-//         {/* Header */}
-//         <div className="mb-6">
-//           <h1 className="text-2xl font-bold text-slate-800">Configure Comparison</h1>
-//           <p className="text-slate-500 mt-1">
-//             Review your test setup before running analysis.
-//           </p>
-//         </div>
-
-//         {/* Center Summary Card */}
-//         <div className="flex justify-center mb-6">
-//           <div className="w-full max-w-xl bg-white border rounded-xl p-6 shadow-sm">
-//             <div className="flex items-start justify-between gap-4">
-//               <div>
-//                 <h3 className="font-semibold text-slate-800">Session Summary</h3>
-//                 <p className="text-sm text-slate-500 mt-1">
-//                   Your uploaded pairs are ready to analyze.
-//                 </p>
-//               </div>
-
-//               {uploadResponse ? (
-//                 <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
-//                   Data loaded
-//                 </span>
-//               ) : (
-//                 <span className="text-xs font-semibold px-3 py-1 rounded-full bg-slate-50 text-slate-600 border border-slate-200">
-//                   Not started
-//                 </span>
-//               )}
-//             </div>
-
-//             <div className="mt-5 grid grid-cols-2 gap-4">
-//               <div className="rounded-lg border bg-slate-50 p-4">
-//                 <div className="text-xs text-slate-500">Total Pairs</div>
-//                 <div className="text-2xl font-bold text-slate-800 mt-1">{pairs.length}</div>
-//               </div>
-
-//               <div className="rounded-lg border bg-slate-50 p-4">
-//                 <div className="text-xs text-slate-500">Status</div>
-//                 <div className="text-sm font-semibold text-slate-800 mt-2">
-//                   {pairs.length > 0 ? "Ready for analysis" : "No pairs found"}
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Pairs Preview (optional but consistent + helpful) */}
-//         <div className="bg-white border rounded-xl p-6 shadow-sm mb-6">
-//           <div className="flex items-center justify-between">
-//             <h3 className="font-semibold text-slate-800">Pairs Preview</h3>
-//             <span className="text-xs text-slate-500">
-//               Showing up to {Math.min(5, pairs.length)} pairs
-//             </span>
-//           </div>
-
-//           {pairs.length === 0 ? (
-//             <div className="mt-4 text-sm text-slate-500">
-//               No pairs were passed to this page. Go back and upload at least one pair.
-//             </div>
-//           ) : (
-//             <div className="mt-4 space-y-3">
-//               {pairs.slice(0, 5).map((p: any) => (
-//                 <div
-//                   key={p.id}
-//                   className="flex items-center justify-between rounded-lg border bg-white p-4"
-//                 >
-//                   <div>
-//                     <div className="font-semibold text-slate-800">Pair {p.id}</div>
-//                     <div className="text-xs text-slate-500 mt-1">
-//                       Mode:{" "}
-//                       <span className="font-medium text-slate-700">
-//                         {p.comparisonMode || "—"}
-//                       </span>
-//                     </div>
-//                   </div>
-
-//                   <span
-//                     className={[
-//                       "text-xs font-semibold px-3 py-1 rounded-full border",
-//                       p.stage === "confirmed"
-//                         ? "bg-green-50 text-green-700 border-green-200"
-//                         : "bg-amber-50 text-amber-700 border-amber-200",
-//                     ].join(" ")}
-//                   >
-//                     {p.stage === "confirmed" ? "Confirmed" : "Draft"}
-//                   </span>
-//                 </div>
-//               ))}
-//             </div>
-//           )}
-//         </div>
-
-//         {/* Bottom Action Bar */}
-//         <div className="flex justify-end gap-4">
-//           <Button variant="secondary" onClick={() => navigate(-1)}>
-//             Back
-//           </Button>
-
-//           {/* <Button
-//             onClick={() => navigate("/results/demo")}
-//             disabled={pairs.length === 0}
-//           >
-//             Start Analysis
-//           </Button> */}
-
-//           {/* <Button
-//             disabled={pairs.length === 0}
-//             onClick={() =>
-//               navigate("/results/demo", {
-//                 state: {
-//                   pairs,
-//                   uploadResponse: uploadResponse, 
-//                 },
-//               })
-//             }
-//           >
-//             Start Analysis
-//           </Button> */}
-
-//           <Button
-//             disabled={pairs.length === 0}
-//             onClick={() => {
-//               console.log("✅ Start Analysis clicked");
-//               console.log("Sending state:", { pairs, uploadResponse });
-//               navigate("/results/demo", {
-//                 state: { pairs, uploadResponse },
-//               });
-//             }}
-//           >
-//             Start Analysis
-//           </Button>
-
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button";
 import { CheckCircle2, Clock, Layers, Play, ShieldCheck } from "lucide-react";
 
+// Review step between upload and results, using navigation state from the upload flow.
 export default function ConfigureTest() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const state = location.state as any;
+  // The page is intentionally tolerant of missing state so users can still recover if they refresh.
   const pairs = state?.pairs || [];
   const uploadResponse = state?.uploadResponse || null;
 
   const confirmedCount = pairs.filter((p: any) => p.stage === "confirmed").length;
 
   return (
-    <div className="bg-slate-50 min-h-[calc(100vh-64px)]">
+    <div className="bg-slate-200 min-h-[calc(100vh-64px)]">
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -260,7 +23,7 @@ export default function ConfigureTest() {
             <div>
               <h1 className="text-3xl font-bold text-slate-800">Configure Comparison</h1>
               <p className="text-slate-500 mt-1">
-                Review your test setup before running analysis.
+                Review your uploaded pairs and confirm you're ready to run analysis.
               </p>
             </div>
 
@@ -281,7 +44,7 @@ export default function ConfigureTest() {
 
         {/* Summary Card */}
         <div className="rounded-2xl border shadow-sm overflow-hidden mb-8 bg-white">
-          <div className="px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+          <div className="px-6 py-5 bg-blue-950 text-white">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="text-xl font-bold">Session Summary</h2>
@@ -333,9 +96,9 @@ export default function ConfigureTest() {
 
         {/* Pairs Preview */}
         <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mb-24">
-          <div className="px-6 py-4 border-b bg-slate-50 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Pairs Preview</h3>
-            <span className="text-xs text-slate-500">
+          <div className="px-6 py-4 border-b px-6 py-5 bg-blue-950 text-white flex items-center justify-between">
+            <h3 className="font-semibold text-white">Pairs Preview</h3>
+            <span className="text-xs text-white">
               Showing up to {Math.min(5, pairs.length)} pairs
             </span>
           </div>
@@ -396,9 +159,6 @@ export default function ConfigureTest() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="secondary" onClick={() => navigate(-1)}>
-                Back
-              </Button>
 
               <Button
                 disabled={pairs.length === 0}
