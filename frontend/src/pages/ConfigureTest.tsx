@@ -99,7 +99,8 @@ export default function ConfigureTest() {
           <div className="px-6 py-4 border-b px-6 py-5 bg-blue-950 text-white flex items-center justify-between">
             <h3 className="font-semibold text-white">Pairs Preview</h3>
             <span className="text-xs text-white">
-              Showing up to {Math.min(5, pairs.length)} pairs
+              {/* Showing up to {Math.min(5, pairs.length)} pairs */}
+              Showing all {pairs.length} pair{pairs.length === 1 ? "" : "s"}
             </span>
           </div>
 
@@ -109,7 +110,8 @@ export default function ConfigureTest() {
             </div>
           ) : (
             <div className="divide-y">
-              {pairs.slice(0, 5).map((p: any) => (
+              {/* {pairs.slice(0, 5).map((p: any) => ( */}
+              {pairs.map((p: any) => (
                 <div key={p.id} className="px-6 py-4 flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">

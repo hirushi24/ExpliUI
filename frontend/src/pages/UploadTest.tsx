@@ -94,6 +94,22 @@ export default function UploadTest() {
     setActiveId(newId);
   };
 
+  const handleRemovePair = (id: number) => {
+    if (pairs.length === 1) return;
+
+    const nextPairs = pairs.filter((pair) => pair.id !== id);
+    setPairs(nextPairs);
+
+    if (activeId === id) {
+      const fallbackPair = nextPairs[nextPairs.length - 1];
+      if (fallbackPair) {
+        setActiveId(fallbackPair.id);
+      }
+    }
+  };
+
+
+
   // Keep metadata aligned with the comparison mode so desktop/mobile requests stay internally consistent.
   const handleComparisonModeChange = (mode: ScreenshotPair["comparisonMode"]) => {
     const forcedDeviceType = mode === "mobile-mobile" ? "mobile" : "desktop";
@@ -259,7 +275,14 @@ export default function UploadTest() {
 
   return (
     <div className="flex h-[calc(100vh-64px)]">
-      <PairListPanel pairs={pairs} activePairId={activeId} onSelect={setActiveId} onAdd={handleAddPair} />
+      {/* <PairListPanel pairs={pairs} activePairId={activeId} onSelect={setActiveId} onAdd={handleAddPair} /> */}
+      <PairListPanel
+        pairs={pairs}
+        activePairId={activeId}
+        onSelect={setActiveId}
+        onAdd={handleAddPair}
+        onRemovePair={handleRemovePair}
+      />
 
       {/* <Toaster /> */}
       {errorMessage ? (

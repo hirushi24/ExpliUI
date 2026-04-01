@@ -44,9 +44,9 @@ function isMetaComplete(m: EnvironmentMetadata) {
   return true;
 }
 
-function normalize(v?: string) {
-  return (v || "").trim().toLowerCase();
-}
+// function normalize(v?: string) {
+//   return (v || "").trim().toLowerCase();
+// }
 
 function getImageSize(file: File): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
@@ -263,7 +263,7 @@ export function PairUploadPanel({
       onMetaChange("B", "deviceModel", aModel);
     }
 
-    if (normalize(pair.metaB.browser)) onMetaChange("B", "browser", "");
+    // if (normalize(pair.metaB.browser)) onMetaChange("B", "browser", "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pair.comparisonMode, pair.metaA.deviceType, pair.metaA.os, pair.metaA.deviceModel]);
 

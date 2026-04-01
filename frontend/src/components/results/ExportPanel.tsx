@@ -308,6 +308,7 @@ const buildPdfBlob = async (
     if (includeHeatmap && pairIssues.length > 0) {
       pairIssues.slice(0, 5).forEach((issue, index, issues) => {
         addWrappedLabeledText(`Issue ${index + 1}: `, issue.description || "-", 9, 110, 13);
+        addWrappedLabeledText("Severity: ", issue.severity?.toUpperCase?.() || "UNKNOWN", 9, 110, 13);
 
         if (issue.explanation?.trim()) {
           addWrappedLabeledText("Explanation: ", issue.explanation, 9, 110, 13);
@@ -560,8 +561,20 @@ export function ExportPanel({
   };
 
   const handleExportJSON = () => {
-    // JSON export preserves the raw structured result for debugging or later processing.
-    const dataStr = JSON.stringify(results, null, 2);
+    // // JSON export preserves the raw structured result for debugging or later processing.
+    // const dataStr = JSON.stringify(results, null, 2);
+    
+    // JSON export keeps full issue details while normalizing summary counts for pair-level reporting.
+    const exportPayload = {
+      ...results,
+      summary: {
+        total_pairs: results.summary.total_pairs,
+        issues_detected: pairsWithIssues.length,
+        no_issues: pairsWithoutIssues.length,
+      },
+    };
+
+    const dataStr = JSON.stringify(exportPayload, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     downloadBlob(dataBlob, `expliui-data.json`);
   };

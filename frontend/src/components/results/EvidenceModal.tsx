@@ -30,9 +30,9 @@ export function EvidenceModal({ issue, onClose }: Props) {
             <h2 className="text-2xl font-bold text-slate-800 mb-1">
               Visual Evidence
             </h2>
-            <p className="text-sm text-slate-600">
+            {/* <p className="text-sm text-slate-600">
               {issue.description}
-            </p>
+            </p> */}
           </div>
           
           <div className="flex items-center gap-2">
@@ -163,11 +163,31 @@ export function EvidenceModal({ issue, onClose }: Props) {
           {/* Heatmap */}
           {showHeatmap && issue.evidence.heatmap_url && (
             <div className="mt-6">
+              <div className="flex justify-between">
               <h3 className="font-semibold text-slate-700 mb-3">Difference Heatmap</h3>
+              {issue.evidence.heatmap_url && (
+                <button
+                  onClick={() => downloadImage(issue.evidence.heatmap_url!, 'heatmap.png')}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              )}
+              </div>
               <HeatmapOverlay 
                 heatmapUrl={issue.evidence.heatmap_url} 
                 zoom={zoom}
               />
+              {/* {issue.evidence.heatmap_url && (
+                <button
+                  onClick={() => downloadImage(issue.evidence.heatmap_url!, 'heatmap.png')}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              )} */}
             </div>
           )}
         </div>

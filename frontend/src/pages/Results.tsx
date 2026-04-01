@@ -34,6 +34,29 @@ const toIssueType = (value?: string) => {
   return "visual";
 };
 
+const formatOsLabel = (value?: string) => {
+  const normalized = (value || "").trim().toLowerCase();
+  if (!normalized) return "Unknown";
+  if (normalized === "macos") return "macOS";
+  if (normalized === "ios") return "iOS";
+  if (normalized === "ipados") return "iPadOS";
+  if (normalized === "windows") return "Windows";
+  if (normalized === "android") return "Android";
+  if (normalized === "linux") return "Linux";
+  return value || "Unknown";
+};
+
+const formatBrowserLabel = (value?: string) => {
+  const normalized = (value || "").trim().toLowerCase();
+  if (!normalized) return "Unknown";
+  if (normalized === "chrome") return "Chrome";
+  if (normalized === "firefox") return "Firefox";
+  if (normalized === "safari") return "Safari";
+  if (normalized === "edge") return "Microsoft Edge";
+  if (normalized === "opera") return "Opera";
+  return value || "Unknown";
+};
+
 interface PairPreview {
   pairId: string;
   imageA: string;
@@ -344,6 +367,29 @@ const fetchResults = async () => {
               issueDescriptionFromList ||
               (typeof pair?.issues === "string" ? pair.issues : `${issueObject?.class || "element"} changed between screenshots`);
 
+              const pairFromState = pairsFromState[pairIndex] || {};
+            const osA = formatOsLabel(
+              pair?.image_list?.[0]?.os ||
+                pairFromState?.metaA?.os ||
+                pairFromState?.envA?.os
+            );
+            const osB = formatOsLabel(
+              pair?.image_list?.[1]?.os ||
+                pairFromState?.metaB?.os ||
+                pairFromState?.envB?.os
+            );
+
+            const browserA = formatBrowserLabel(
+              pair?.image_list?.[0]?.browser ||
+                pairFromState?.metaA?.browser ||
+                pairFromState?.envA?.browser
+            );
+            const browserB = formatBrowserLabel(
+              pair?.image_list?.[1]?.browser ||
+                pairFromState?.metaB?.browser ||
+                pairFromState?.envB?.browser
+            );
+
             const explanationFromPairList = typeof pairExplanations[index] === "string" ? pairExplanations[index] : "";
 
             return {
@@ -353,8 +399,10 @@ const fetchResults = async () => {
               severity,
               category: issueObject?.issue_type || "visual_regression",
               detected_between: {
-                environment_a: { browser: "Baseline", os: "Captured", device_type: "desktop" },
-                environment_b: { browser: "Candidate", os: "Captured", device_type: "desktop" },
+                // environment_a: { browser: "Baseline", os: "Captured", device_type: "desktop" },
+                // environment_b: { browser: "Candidate", os: "Captured", device_type: "desktop" },
+                environment_a: { browser: browserA, os: osA, device_type: "desktop" },
+                environment_b: { browser: browserB, os: osB, device_type: "desktop" },
               },
               description: issueObject?.description || fallbackDescription,
               explanation:
@@ -379,7 +427,8 @@ const fetchResults = async () => {
                 },
               },
               visual_impact: issueObject?.class || "ui_element",
-              occurrence_frequency: "common",
+              // occurrence_frequency: "common",
+              occurrence_frequency: "detected_once",
             };
           };
 
